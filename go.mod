@@ -1,4 +1,4 @@
-module nbio_examples
+module github.com/lesismal/nbio_examples
 
 go 1.17
 
@@ -7,7 +7,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/lesismal/llib v1.1.2
-	github.com/lesismal/nbio v1.2.6
+	github.com/lesismal/nbio v1.2.7-0.20211019160841-5f4f51a4ceff
 )
 
 require (
