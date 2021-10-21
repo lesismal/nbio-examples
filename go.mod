@@ -7,7 +7,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/lesismal/llib v1.1.2
-	github.com/lesismal/nbio v1.2.7-0.20211019160841-5f4f51a4ceff
+	github.com/lesismal/nbio v1.2.7-0.20211021153951-de7139443ca5
 )
 
 require (

@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	idIndex    = uint32(0)
-	wsUpgrader *websocket.Upgrader
+	idIndex            = uint32(0)
+	wsUpgraderSettings *websocket.Settings
 )
 
 type ConnectionContext struct {
@@ -33,14 +33,15 @@ func onClose(c *websocket.Conn, err error) {
 	fmt.Println("OnClose:", connCtx.id, c.RemoteAddr().String(), err)
 }
 
-func newUpgrader() *websocket.Upgrader {
-	u := websocket.NewUpgrader()
+func newUpgraderSettings() *websocket.Settings {
+	u := websocket.NewSettings()
 	u.OnMessage(onMessage)
 	u.OnClose(onClose)
 	return u
 }
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
+	wsUpgrader := websocket.NewUpgraderWithSetttings(wsUpgraderSettings)
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
@@ -54,7 +55,7 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
-	wsUpgrader = newUpgrader()
+	wsUpgraderSettings = newUpgraderSettings()
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/ws", onWebsocket)
 
