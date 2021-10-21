@@ -28,9 +28,10 @@ func newUpgrader() *websocket.Upgrader {
 		if output == nil {
 			var err error
 			deflateStr := ""
-			if u.CompressionEnabled() {
-				deflateStr = ".df"
-			}
+			// this no longer works
+			// if u.CompressionEnabled() {
+			// 	deflateStr = ".df"
+			// }
 			filename := fmt.Sprintf("data_%d.%d%s", id, time.Now().UnixNano(), deflateStr)
 			id++
 			output, err = os.Create(filename)
