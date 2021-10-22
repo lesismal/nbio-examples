@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -12,6 +13,10 @@ import (
 
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
+)
+
+var (
+	clients = flag.Int("clients", 1, "number of clients")
 )
 
 func newUpgrader() *websocket.Upgrader {
@@ -32,6 +37,7 @@ func newUpgrader() *websocket.Upgrader {
 }
 
 func main() {
+	flag.Parse()
 	engine := nbhttp.NewEngine(nbhttp.Config{})
 	err := engine.Start()
 	if err != nil {
@@ -39,20 +45,22 @@ func main() {
 		return
 	}
 
-	for i := 0; i < 1; i++ {
-		u := url.URL{Scheme: "ws", Host: "localhost:8888", Path: "/ws"}
-		dialer := &websocket.Dialer{
-			Engine:      engine,
-			Upgrader:    newUpgrader(),
-			DialTimeout: time.Second * 3,
-		}
-		c, res, err := dialer.Dial(u.String(), nil)
-		if err != nil {
-			bReason, _ := io.ReadAll(res.Body)
-			fmt.Printf("dial: %v, reason: %v\n", err, string(bReason))
-			return
-		}
-		c.WriteMessage(websocket.TextMessage, []byte("hello"))
+	for i := 0; i < *clients; i++ {
+		go func() {
+			u := url.URL{Scheme: "ws", Host: "localhost:8888", Path: "/ws"}
+			dialer := &websocket.Dialer{
+				Engine:      engine,
+				Upgrader:    newUpgrader(),
+				DialTimeout: time.Second * 3,
+			}
+			c, res, err := dialer.Dial(u.String(), nil)
+			if err != nil {
+				bReason, _ := io.ReadAll(res.Body)
+				fmt.Printf("dial: %v, reason: %v\n", err, string(bReason))
+				return
+			}
+			c.WriteMessage(websocket.TextMessage, []byte("hello"))
+		}()
 	}
 
 	interrupt := make(chan os.Signal, 1)
