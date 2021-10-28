@@ -4,7 +4,7 @@ import (
 	"flag"
 	"time"
 
-	"github.com/lesismal/nbio_examples/sticky/proxy"
+	"github.com/lesismal/nbio-examples/sticky/proxy"
 )
 
 var (
