@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/lesismal/llib/std/crypto/tls"
+	"github.com/lesismal/nbio-examples/sticky/proxy"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
-	"github.com/lesismal/nbio_examples/sticky/proxy"
 )
 
 var (
