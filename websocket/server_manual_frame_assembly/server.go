@@ -9,9 +9,9 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/lesismal/nbio-examples/fixedbufferpool"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
-	"github.com/lesismal/nbio_examples/fixedbufferpool"
 )
 
 var (
