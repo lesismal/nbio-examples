@@ -24,7 +24,6 @@ func newUpgrader() *websocket.Upgrader {
 	u := websocket.NewUpgrader()
 	u.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
 		fmt.Printf("received: %s\n",string(data))
-		connectedClients <- c
 	})
 
 	u.OnClose(func(c *websocket.Conn, err error) {
@@ -64,7 +63,7 @@ func main() {
 
 	go func() {
 			c := <-connectedClients
-			for x:= 0; x< 10; x++ {
+			for x:= 0; x< 100; x++ {
 				c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("message %d", x)))
 			}
 		}()
