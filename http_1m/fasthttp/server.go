@@ -1,82 +1,50 @@
 package main
 
 import (
-	"context"
-	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
-	"os/signal"
 	"runtime"
 	"sync/atomic"
 	"time"
 
-	"github.com/lesismal/nbio/nbhttp"
+	"github.com/valyala/fasthttp"
 )
 
 var (
 	qps   uint64 = 0
 	total uint64 = 0
-
-	useStdConn = flag.Bool("std", false, "use std conn")
 )
 
-func onEcho(w http.ResponseWriter, r *http.Request) {
-	data := r.Body.(*nbhttp.BodyReader).RawBody()
+func onEcho(ctx *fasthttp.RequestCtx) {
+	data := ctx.PostBody()
 	if len(data) > 0 {
-		w.Write(data)
+		ctx.Write(data)
 	} else {
-		w.Write([]byte(time.Now().Format("20060102 15:04:05")))
+		ctx.Write([]byte(time.Now().Format("20060102 15:04:05")))
 	}
 	atomic.AddUint64(&qps, 1)
 }
 
 func main() {
-	flag.Parse()
-
 	go func() {
-		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+		if err := http.ListenAndServe(":6060", nil); err != nil {
 			panic(err)
 		}
 	}()
 
-	mux := &http.ServeMux{}
-	mux.HandleFunc("/echo", onEcho)
-
-	svr := nbhttp.NewServer(nbhttp.Config{
-		Network:    "tcp",
-		Addrs:      addrs,
-		MaxLoad:    1000000,
-		NPoller:    runtime.NumCPU() * 2,
-		Handler:    mux,
-		UseStdConn: *useStdConn,
-	})
-
-	err := svr.Start()
-	if err != nil {
-		fmt.Printf("nbio.Start failed: %v\n", err)
-		return
+	for _, addr := range addrs {
+		server := &fasthttp.Server{Handler: onEcho}
+		go server.ListenAndServe(addr)
 	}
 
-	go func() {
-		ticker := time.NewTicker(time.Second)
-		for i := 1; true; i++ {
-			<-ticker.C
-			n := atomic.SwapUint64(&qps, 0)
-			total += n
-			log.Printf("running for %v seconds, NumGoroutine: %v, qps: %v, total: %v\n", i, runtime.NumGoroutine(), n, total)
-		}
-	}()
-
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-	<-interrupt
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-	defer cancel()
-	svr.Shutdown(ctx)
+	ticker := time.NewTicker(time.Second)
+	for i := 1; true; i++ {
+		<-ticker.C
+		n := atomic.SwapUint64(&qps, 0)
+		total += n
+		fmt.Printf("running for %v seconds, NumGoroutine: %v, qps: %v, total: %v\n", i, runtime.NumGoroutine(), n, total)
+	}
 }
 
 var addrs = []string{
