@@ -8,6 +8,6 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/lesismal/llib v1.1.4
-	github.com/lesismal/nbio v1.2.9-0.20211108184937-1232821c931b
+	github.com/lesismal/nbio v1.2.9-0.20211108190035-b9cc348eeef6
 	github.com/valyala/fasthttp v1.31.0
 )
