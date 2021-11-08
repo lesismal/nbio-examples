@@ -46,12 +46,13 @@ func main() {
 	mux.HandleFunc("/echo", onEcho)
 
 	svr := nbhttp.NewServer(nbhttp.Config{
-		Network:    "tcp",
-		Addrs:      addrs,
-		MaxLoad:    1000000,
-		NPoller:    runtime.NumCPU() * 2,
-		Handler:    mux,
-		UseStdConn: *useStdConn,
+		Network:        "tcp",
+		Addrs:          addrs,
+		MaxLoad:        1000000,
+		NPoller:        runtime.NumCPU() * 2,
+		Handler:        mux,
+		ReadBufferSize: 1024 * 4,
+		UseStdConn:     *useStdConn,
 	})
 
 	err := svr.Start()
