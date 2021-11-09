@@ -52,6 +52,7 @@ func main() {
 		MaxLoad:                 1000000,
 		ReleaseWebsocketPayload: true,
 		Handler:                 mux,
+		ReadBufferSize:          1024 * 4,
 		UseStdConn:              *useStdConn,
 	})
 
