@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -16,6 +17,8 @@ var (
 	total uint64 = 0
 
 	svr *nbhttp.Server
+
+	useStdConn = flag.Bool("std", false, "use std conn")
 )
 
 func newUpgrader() *websocket.Upgrader {
@@ -38,6 +41,8 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	flag.Parse()
+
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/ws", onWebsocket)
 
@@ -47,6 +52,7 @@ func main() {
 		MaxLoad:                 1000000,
 		ReleaseWebsocketPayload: true,
 		Handler:                 mux,
+		UseStdConn:              *useStdConn,
 	})
 
 	err := svr.Start()
