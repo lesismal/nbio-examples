@@ -17,8 +17,6 @@ var (
 	total uint64 = 0
 
 	svr *nbhttp.Server
-
-	useStdConn = flag.Bool("std", false, "use std conn")
 )
 
 func newUpgrader() *websocket.Upgrader {
@@ -53,7 +51,6 @@ func main() {
 		ReleaseWebsocketPayload: true,
 		Handler:                 mux,
 		ReadBufferSize:          1024 * 4,
-		UseStdConn:              *useStdConn,
 	})
 
 	err := svr.Start()

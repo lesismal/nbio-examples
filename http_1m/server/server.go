@@ -19,8 +19,6 @@ import (
 var (
 	qps   uint64 = 0
 	total uint64 = 0
-
-	useStdConn = flag.Bool("std", false, "use std conn")
 )
 
 func onEcho(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +50,6 @@ func main() {
 		NPoller:        runtime.NumCPU() * 2,
 		Handler:        mux,
 		ReadBufferSize: 1024 * 4,
-		UseStdConn:     *useStdConn,
 	})
 
 	err := svr.Start()
