@@ -28,9 +28,9 @@ func wsHandler(c *fastws.Conn) {
 			log.Println("read:", err)
 			break
 		}
-		n, err := c.WriteMessage(mode, msg)
-		if err != nil || n != len(msg) {
-			log.Printf("write: %v, %v, %v", n, len(msg), err)
+		_, err = c.WriteMessage(mode, msg)
+		if err != nil {
+			log.Println("write:", err)
 			break
 		}
 		atomic.AddUint64(&qps, 1)
