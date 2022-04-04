@@ -3,70 +3,62 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
-	_ "net/http/pprof"
 	"runtime"
 	"sync/atomic"
 	"time"
 
-	"github.com/gorilla/websocket"
+	"github.com/buaazp/fasthttprouter"
+	"github.com/dgrr/fastws"
+	"github.com/valyala/fasthttp"
 )
 
 var (
 	qps   uint64 = 0
 	total uint64 = 0
-
-	upgrader = websocket.Upgrader{}
 )
 
-func echo(w http.ResponseWriter, r *http.Request) {
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Print("upgrade:", err)
-		return
-	}
+func wsHandler(c *fastws.Conn) {
 	defer c.Close()
+	var err error
+	var msg []byte
+	var mode fastws.Mode
 	for {
-		mt, message, err := c.ReadMessage()
+		mode, msg, err = c.ReadMessage(msg[:0])
 		if err != nil {
 			log.Println("read:", err)
 			break
 		}
-		err = c.WriteMessage(mt, message)
-		if err != nil {
-			log.Println("write:", err)
+		n, err := c.WriteMessage(mode, msg)
+		if err != nil || n != len(msg) {
+			log.Printf("write: %v, %v, %v", n, len(msg), err)
 			break
 		}
+		atomic.AddUint64(&qps, 1)
 	}
 }
 
 func serve(addrs []string) {
 	for _, v := range addrs {
 		go func(addr string) {
-			mux := &http.ServeMux{}
-			mux.HandleFunc("/wss", echo)
-			server := http.Server{
-				Addr:    addr,
-				Handler: mux,
+			router := fasthttprouter.New()
+			router.GET("/ws", fastws.Upgrade(wsHandler))
+
+			server := fasthttp.Server{
+				Handler: router.Handler,
 			}
-			server.ListenAndServeTLS("server.crt", "server.key")
+
+			fmt.Println("server exit:", server.ListenAndServe(addr))
 		}(v)
 	}
 }
 func main() {
-	go func() {
-		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
-			panic(err)
-		}
-	}()
-
 	serve(addrs)
 	ticker := time.NewTicker(time.Second)
 	for i := 1; true; i++ {
 		<-ticker.C
 		n := atomic.SwapUint64(&qps, 0)
 		total += n
-		fmt.Printf("running for %v seconds, NumGoroutine: %v, qps: %v, total: %v\n--------------------------------\n", i, runtime.NumGoroutine(), n, total)
+		fmt.Printf("running for %v seconds, NumGoroutine: %v, qps: %v, total: %v\n", i, runtime.NumGoroutine(), n, total)
 	}
 }
 

@@ -21,9 +21,9 @@ var (
 	totalSuccess uint64 = 0
 	totalFailed  uint64 = 0
 
-	sleepTime    = flag.Int("s", 2, "sleep time for each loop in a goroutine")
-	numClient    = flag.Int("c", 50000, "client num")
-	numGoroutine = flag.Int("g", 500, "goroutine num")
+	sleepTime    = flag.Int("s", 0, "sleep time for each loop in a goroutine")
+	numClient    = flag.Int("c", 100000, "client num")
+	numGoroutine = flag.Int("g", 1000, "goroutine num")
 )
 
 func main() {

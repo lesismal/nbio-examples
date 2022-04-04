@@ -2,60 +2,65 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"runtime"
 	"sync/atomic"
 	"time"
 
-	"github.com/lesismal/nbio/nbhttp"
-	"github.com/lesismal/nbio/nbhttp/websocket"
+	"github.com/gorilla/websocket"
 )
 
 var (
 	qps   uint64 = 0
 	total uint64 = 0
 
-	svr *nbhttp.Server
+	upgrader = websocket.Upgrader{}
 )
 
-func newUpgrader() *websocket.Upgrader {
-	u := websocket.NewUpgrader()
-	u.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
-		c.SetReadDeadline(time.Now().Add(time.Second * 60))
-		c.WriteMessage(messageType, data)
-		atomic.AddUint64(&qps, 1)
-	})
-
-	return u
-}
-
-func onWebsocket(w http.ResponseWriter, r *http.Request) {
-	upgrader := newUpgrader()
-	_, err := upgrader.Upgrade(w, r, nil)
+func echo(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		panic(err)
-	}
-}
-
-func main() {
-	mux := &http.ServeMux{}
-	mux.HandleFunc("/ws", onWebsocket)
-
-	svr = nbhttp.NewServer(nbhttp.Config{
-		Network:                 "tcp",
-		Addrs:                   addrs,
-		MaxLoad:                 1000000,
-		ReleaseWebsocketPayload: true,
-		Handler:                 mux,
-	})
-
-	err := svr.Start()
-	if err != nil {
-		fmt.Printf("nbio.Start failed: %v\n", err)
+		log.Print("upgrade:", err)
 		return
 	}
-	defer svr.Stop()
+	defer c.Close()
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			log.Println("read:", err)
+			break
+		}
+		err = c.WriteMessage(mt, message)
+		if err != nil {
+			log.Println("write:", err)
+			break
+		}
+	}
+}
 
+func serve(addrs []string) {
+	for _, v := range addrs {
+		go func(addr string) {
+			mux := &http.ServeMux{}
+			mux.HandleFunc("/wss", echo)
+			server := http.Server{
+				Addr:    addr,
+				Handler: mux,
+			}
+			server.ListenAndServeTLS("server.crt", "server.key")
+		}(v)
+	}
+}
+func main() {
+	go func() {
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			panic(err)
+		}
+	}()
+
+	serve(addrs)
 	ticker := time.NewTicker(time.Second)
 	for i := 1; true; i++ {
 		<-ticker.C

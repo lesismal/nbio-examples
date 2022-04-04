@@ -19,7 +19,7 @@ var (
 	totalFailed  uint64 = 0
 
 	numClient    = flag.Int("c", 200000, "client num")
-	numGoroutine = flag.Int("g", 500, "goroutine num")
+	numGoroutine = flag.Int("g", 1000, "goroutine num")
 )
 
 func main() {
