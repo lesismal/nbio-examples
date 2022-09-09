@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net"
 )
@@ -16,16 +17,18 @@ func main() {
 		return
 	}
 
-	request := []byte("hello")
-	response := make([]byte, 1024)
-	_, err = conn.Write(request)
-	if packLen, remoteAddr, err := conn.ReadFromUDP(response); err == nil {
-		log.Println("onData:", string(response[:packLen]))
-		if !bytes.Equal(request, response[:packLen]) {
-			log.Panic("not equal")
+	for i:=0; i<3; i++{
+		request := []byte(fmt.Sprintf("hello %d", i))
+		response := make([]byte, 1024)
+		_, err = conn.Write(request)
+		if packLen, remoteAddr, err := conn.ReadFromUDP(response); err == nil {
+			log.Println("onData:", string(response[:packLen]))
+			if !bytes.Equal(request, response[:packLen]) {
+				log.Panic("not equal")
+			}
+		} else {
+			log.Panic("recv msg failed:", remoteAddr, err)
 		}
-	} else {
-		log.Panic("recv msg failed:", remoteAddr, err)
 	}
 
 	log.Println("success")
