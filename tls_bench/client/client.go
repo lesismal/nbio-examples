@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/lesismal/llib/bytes"
 	ltls "github.com/lesismal/llib/std/crypto/tls"
 	"github.com/lesismal/nbio"
 	"github.com/lesismal/nbio/extension/tls"
@@ -45,7 +44,7 @@ var (
 // Session .
 type Session struct {
 	Conn   *tls.Conn
-	Buffer *bytes.Buffer
+	Buffer []byte
 }
 
 // wrapData .
@@ -87,9 +86,10 @@ func main() {
 	g := nbio.NewGopher(nbio.Config{})
 	g.OnData(wrapData(func(c *nbio.Conn, tlsConn *tls.Conn, data []byte) {
 		session := c.Session().(*Session)
-		session.Buffer.Push(data)
-		for session.Buffer.Len() >= bufsize {
-			buf, _ := session.Buffer.Pop(bufsize)
+		session.Buffer = append(session.Buffer, data...)
+		for len(session.Buffer) >= bufsize {
+			buf := session.Buffer[:bufsize]
+			session.Buffer = session.Buffer[bufsize:]
 			tlsConn.Write(buf)
 			atomic.AddInt64(&qps, 1)
 			atomic.AddInt64(&totalRead, int64(bufsize))
@@ -121,8 +121,7 @@ func main() {
 			}
 
 			nbConn.SetSession(&Session{
-				Conn:   tlsConn,
-				Buffer: bytes.NewBuffer(),
+				Conn: tlsConn,
 			})
 			nonBlock := true
 			tlsConn.ResetConn(nbConn, nonBlock)
