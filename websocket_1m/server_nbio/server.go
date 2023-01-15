@@ -51,6 +51,8 @@ func main() {
 		ReleaseWebsocketPayload: true,
 		Handler:                 mux,
 		ReadBufferSize:          1024 * 4,
+		IOMod:                   nbhttp.IOModMixed,
+		MaxBlockingOnline:       100000,
 	})
 
 	err := svr.Start()
