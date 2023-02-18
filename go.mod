@@ -15,5 +15,6 @@ require (
 	github.com/lesismal/nbio v1.3.8
 	github.com/lxzan/gws v1.2.10
 	github.com/valyala/fasthttp v1.34.0
+	golang.org/x/crypto v0.6.0 // indirect
 	nhooyr.io/websocket v1.8.6
 )
