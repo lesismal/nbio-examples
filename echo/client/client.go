@@ -23,10 +23,10 @@ func main() {
 
 	rand.Read(buf)
 
-	g := nbio.NewGopher(nbio.Config{})
+	engine := nbio.NewEngine(nbio.Config{})
 
 	done := make(chan int)
-	g.OnData(func(c *nbio.Conn, data []byte) {
+	engine.OnData(func(c *nbio.Conn, data []byte) {
 		ret = append(ret, data...)
 		if len(ret) == len(buf) {
 			if bytes.Equal(buf, ret) {
@@ -35,17 +35,18 @@ func main() {
 		}
 	})
 
-	err := g.Start()
+	err := engine.Start()
 	if err != nil {
 		fmt.Printf("Start failed: %v\n", err)
 	}
-	defer g.Stop()
+	defer engine.Stop()
 
+	// net.Dial also can be used here
 	c, err := nbio.Dial("tcp", addr)
 	if err != nil {
-		fmt.Printf("Dial failed: %v\n", err)
+		panic(err)
 	}
-	g.AddConn(c)
+	engine.AddConn(c)
 	c.Write(buf)
 
 	select {
