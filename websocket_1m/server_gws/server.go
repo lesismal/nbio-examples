@@ -13,20 +13,21 @@ import (
 var (
 	qps   uint64 = 0
 	total uint64 = 0
+
+	upgrader = gws.NewUpgrader(func(c *gws.Upgrader) {
+		// c.CompressEnabled = true
+		c.CheckTextEncoding = true
+		c.MaxContentLength = 32 * 1024 * 1024
+		c.EventHandler = new(WebSocket)
+	})
 )
 
 func serve(addrs []string) {
 	for _, v := range addrs {
 		go func(addr string) {
-			var config = &gws.Config{
-				CompressEnabled:   true,
-				CheckTextEncoding: true,
-				MaxContentLength:  32 * 1024 * 1024,
-			}
-			var handler = new(WebSocket)
 			mux := &http.ServeMux{}
 			mux.HandleFunc("/ws", func(writer http.ResponseWriter, request *http.Request) {
-				socket, err := gws.Accept(writer, request, handler, config)
+				socket, err := upgrader.Accept(writer, request)
 				if err != nil {
 					return
 				}
@@ -63,7 +64,7 @@ func (c *WebSocket) OnPing(socket *gws.Conn, payload []byte) {
 func (c *WebSocket) OnPong(socket *gws.Conn, payload []byte) {}
 
 func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
-	socket.WriteMessage(message.Typ(), message.Bytes())
+	socket.WriteMessage(message.Opcode, message.Data.Bytes())
 	message.Close()
 	atomic.AddUint64(&qps, 1)
 }
