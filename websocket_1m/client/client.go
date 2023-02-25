@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"net/url"
@@ -12,12 +14,16 @@ import (
 )
 
 var (
+	running             = true
+	counting            = false
+	bodySize     int    = 1024
 	connected    uint64 = 0
 	success      uint64 = 0
 	failed       uint64 = 0
 	totalSuccess uint64 = 0
 	totalFailed  uint64 = 0
 
+	chConns      chan *websocket.Conn
 	numClient    = flag.Int("c", 200000, "client num")
 	numGoroutine = flag.Int("g", 1000, "goroutine num")
 )
@@ -28,12 +34,22 @@ func main() {
 	connNum := *numClient
 	goroutineNum := *numGoroutine
 
+	chConns = make(chan *websocket.Conn, connNum)
+
 	for i := 0; i < goroutineNum; i++ {
 		go loop(addrs[i%len(addrs)], connNum/goroutineNum)
 	}
 
+	for i := 0; i < connNum; i++ {
+		c := <-chConns
+		defer c.Close()
+	}
+
+	time.Sleep(time.Second * 3)
+	counting = true
+
 	ticker := time.NewTicker(time.Second)
-	for i := 1; true; i++ {
+	for i := 1; i <= 15; i++ {
 		<-ticker.C
 		nSuccess := atomic.SwapUint64(&success, 0)
 		nFailed := atomic.SwapUint64(&failed, 0)
@@ -41,6 +57,9 @@ func main() {
 		totalFailed += nFailed
 		fmt.Printf("running for %v seconds, online: %v, NumGoroutine: %v, success: %v, totalSuccess: %v, failed: %v, totalFailed: %v\n", i, connected, runtime.NumGoroutine(), nSuccess, totalSuccess, nFailed, totalFailed)
 	}
+
+	running = false
+	time.Sleep(time.Second)
 }
 
 func loop(addr string, connNum int) {
@@ -52,41 +71,42 @@ func loop(addr string, connNum int) {
 			conn, _, err := websocket.DefaultDialer.Dial(addr, nil)
 			if err == nil {
 				conns[i] = conn
+				chConns <- conn
 				atomic.AddUint64(&connected, 1)
 				break
 			}
 			time.Sleep(time.Second / 10)
 		}
 	}
-	for {
+	buf := make([]byte, bodySize)
+	for running {
 		for i := 0; i < connNum; i++ {
-			echo(conns[i])
+			rand.Read(buf)
+			echo(conns[i], buf)
 			// return
 		}
 	}
 }
 
-func echo(c *websocket.Conn) {
-	text := "hello world"
-	err := c.WriteMessage(websocket.TextMessage, []byte(text))
+func echo(c *websocket.Conn, buf []byte) {
+	err := c.WriteMessage(websocket.BinaryMessage, buf)
 	if err != nil {
-		fmt.Println("WriteMessage failed 111:", err)
 		atomic.AddUint64(&failed, 1)
 		return
 	}
 
 	_, message, err := c.ReadMessage()
 	if err != nil {
-		fmt.Println("ReadMessage failed 222:", err)
 		atomic.AddUint64(&failed, 1)
 		return
 	}
 
-	if string(message) != text {
-		fmt.Println("ReadMessage failed 333:", string(message))
-		atomic.AddUint64(&failed, 1)
-	} else {
-		atomic.AddUint64(&success, 1)
+	if counting {
+		if !bytes.Equal(message, buf) {
+			atomic.AddUint64(&failed, 1)
+		} else {
+			atomic.AddUint64(&success, 1)
+		}
 	}
 }
 
