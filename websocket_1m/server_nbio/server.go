@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/lesismal/nbio/mempool"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 )
@@ -40,6 +41,8 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
+
+	mempool.DefaultMemPool = mempool.New(1024*2, 1024*4, 1024*64)
 
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/ws", onWebsocket)

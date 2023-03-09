@@ -14,11 +14,14 @@ var (
 	qps   uint64 = 0
 	total uint64 = 0
 
-	upgrader = gws.NewUpgrader(func(c *gws.Upgrader) {
-		// c.CompressEnabled = true
-		c.CheckTextEncoding = true
-		c.MaxContentLength = 32 * 1024 * 1024
-		c.EventHandler = new(WebSocket)
+	upgrader = gws.NewUpgrader(new(WebSocket), &gws.ServerOption{
+		CompressEnabled:     true,
+		CheckUtf8Enabled:    true,
+		ReadMaxPayloadSize:  32 * 1024 * 1024,
+		WriteMaxPayloadSize: 32 * 1024 * 1024,
+		ReadAsyncEnabled:    true,
+		ReadBufferSize:      4 * 1024,
+		WriteBufferSize:     4 * 1024,
 	})
 )
 
@@ -58,15 +61,14 @@ func (c *WebSocket) OnOpen(socket *gws.Conn) {
 
 func (c *WebSocket) OnPing(socket *gws.Conn, payload []byte) {
 	// fmt.Printf("onping: payload=%s\n", string(payload))
-	// socket.WritePong(payload)
+	socket.WritePong(payload)
 }
 
 func (c *WebSocket) OnPong(socket *gws.Conn, payload []byte) {}
 
 func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
+	defer message.Close()
 	socket.WriteMessage(message.Opcode, message.Data.Bytes())
-	message.Close()
-	atomic.AddUint64(&qps, 1)
 }
 
 func main() {
