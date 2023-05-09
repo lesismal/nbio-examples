@@ -101,7 +101,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	lnTLS := tls.NewListener(ln, tlsConfig, &tls.PoolAllocator{})
+	lnTLS := tls.NewListener(ln, tlsConfig, &tls.NativeAllocator{})
 	if err != nil {
 		panic(err)
 	}

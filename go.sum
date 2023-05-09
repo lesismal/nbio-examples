@@ -124,10 +124,10 @@ github.com/labstack/gommon v0.3.0 h1:JEeO0bvc78PKdyHxloTKiF8BD5iGrH8T6MSeGvSgob0
 github.com/labstack/gommon v0.3.0/go.mod h1:MULnywXg0yavhxWKc+lOruYdAhDwPK9wf0OL7NoOu+k=
 github.com/leodido/go-urn v1.2.0 h1:hpXL4XnriNwQ/ABnpepYM/1vCLWNDfUNts8dX3xTG6Y=
 github.com/leodido/go-urn v1.2.0/go.mod h1:+8+nEpDfqqsY+g338gtMEUOtuK+4dEMhiQEgxpxOKII=
-github.com/lesismal/llib v1.1.11-0.20230509073157-ed8bca47be2f h1:WsmKZ5hEZ/GHQOlVKFvO49btk8aFFXIt1OUgICGv0m0=
-github.com/lesismal/llib v1.1.11-0.20230509073157-ed8bca47be2f/go.mod h1:70tFXXe7P1FZ02AU9l8LgSOK7d7sRrpnkUr3rd3gKSg=
-github.com/lesismal/nbio v1.3.13-0.20230509080555-7085c99918eb h1:yjocbODHbWBsFd3TRceATiJpc3LQOkSZBcKHWTGFue8=
-github.com/lesismal/nbio v1.3.13-0.20230509080555-7085c99918eb/go.mod h1:Ujb1hudLRVCyuvW91L0U1c2xjU3sLTyZQEUqPiPEs/I=
+github.com/lesismal/llib v1.1.12-0.20230509082440-b32eae1c8aaa h1:BJnJOUhTrEySIG5ogNgK8RTaUYyN4qV3qyJfqzAAaRU=
+github.com/lesismal/llib v1.1.12-0.20230509082440-b32eae1c8aaa/go.mod h1:70tFXXe7P1FZ02AU9l8LgSOK7d7sRrpnkUr3rd3gKSg=
+github.com/lesismal/nbio v1.3.13-0.20230509082601-043d0ecae90d h1:aDggouyW8gjgrv9GlluSW6HmcDJvW0eMF06o/mUTa2I=
+github.com/lesismal/nbio v1.3.13-0.20230509082601-043d0ecae90d/go.mod h1:8x1nr7eIrwiYT0hSOalsIT8va50XupPle/qeQQfYHso=
 github.com/lxzan/gws v1.4.4 h1:OuU9KRTWX6pUzW8YodRAPlTR0S/LXWSONIqDnxE9XBg=
 github.com/lxzan/gws v1.4.4/go.mod h1:dVFrrjW+m8YrfF+dxvJ2k3zCYLuCzZRAf4WOmGFprSg=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
