@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/lesismal/llib/std/crypto/tls"
+	"github.com/lesismal/nbio"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 )
@@ -57,6 +58,15 @@ func startNBIO(tlsConfig *tls.Config) {
 	nbhttpEngine = nbhttp.NewEngine(nbhttp.Config{
 		TLSConfig:               tlsConfig,
 		ReleaseWebsocketPayload: true,
+	})
+
+	nbhttpEngine.Engine.OnClose(func(c *nbio.Conn, err error) {
+		c.MustExecute(func() {
+			upgrader, ok := c.Session().(nbhttp.Upgrader)
+			if ok && upgrader != nil {
+				upgrader.Close(nil, err)
+			}
+		})
 	})
 
 	err := nbhttpEngine.Start()

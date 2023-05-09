@@ -124,12 +124,10 @@ github.com/labstack/gommon v0.3.0 h1:JEeO0bvc78PKdyHxloTKiF8BD5iGrH8T6MSeGvSgob0
 github.com/labstack/gommon v0.3.0/go.mod h1:MULnywXg0yavhxWKc+lOruYdAhDwPK9wf0OL7NoOu+k=
 github.com/leodido/go-urn v1.2.0 h1:hpXL4XnriNwQ/ABnpepYM/1vCLWNDfUNts8dX3xTG6Y=
 github.com/leodido/go-urn v1.2.0/go.mod h1:+8+nEpDfqqsY+g338gtMEUOtuK+4dEMhiQEgxpxOKII=
-github.com/lesismal/llib v1.1.10 h1:6k6OYfp5+CYEK2nGAytpC6l9FO+nNs7gA/mpK+lPUkI=
-github.com/lesismal/llib v1.1.10/go.mod h1:70tFXXe7P1FZ02AU9l8LgSOK7d7sRrpnkUr3rd3gKSg=
-github.com/lesismal/nbio v1.3.11-0.20230309135745-d28f4d7094e0 h1:Z71QMxbY6LCkHJczWWvQSzNtrx2smdb9snhiiJ7eRMM=
-github.com/lesismal/nbio v1.3.11-0.20230309135745-d28f4d7094e0/go.mod h1:tqxheJo/2endB+7KUtUAMrgnESoWSfJJ4AaJmTKLUxQ=
-github.com/lesismal/nbio v1.3.11-0.20230309141809-340259bc4a10 h1:/C1GECu4F1HBnDtWAtpzzL4gN9afjNvDwuVHza31vvs=
-github.com/lesismal/nbio v1.3.11-0.20230309141809-340259bc4a10/go.mod h1:tqxheJo/2endB+7KUtUAMrgnESoWSfJJ4AaJmTKLUxQ=
+github.com/lesismal/llib v1.1.11-0.20230509073157-ed8bca47be2f h1:WsmKZ5hEZ/GHQOlVKFvO49btk8aFFXIt1OUgICGv0m0=
+github.com/lesismal/llib v1.1.11-0.20230509073157-ed8bca47be2f/go.mod h1:70tFXXe7P1FZ02AU9l8LgSOK7d7sRrpnkUr3rd3gKSg=
+github.com/lesismal/nbio v1.3.13-0.20230509080555-7085c99918eb h1:yjocbODHbWBsFd3TRceATiJpc3LQOkSZBcKHWTGFue8=
+github.com/lesismal/nbio v1.3.13-0.20230509080555-7085c99918eb/go.mod h1:Ujb1hudLRVCyuvW91L0U1c2xjU3sLTyZQEUqPiPEs/I=
 github.com/lxzan/gws v1.4.4 h1:OuU9KRTWX6pUzW8YodRAPlTR0S/LXWSONIqDnxE9XBg=
 github.com/lxzan/gws v1.4.4/go.mod h1:dVFrrjW+m8YrfF+dxvJ2k3zCYLuCzZRAf4WOmGFprSg=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=

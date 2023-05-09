@@ -15,8 +15,8 @@ require (
 	github.com/kataras/iris/v12 v12.1.8
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect
-	github.com/lesismal/llib v1.1.10
-	github.com/lesismal/nbio v1.3.11-0.20230309141809-340259bc4a10
+	github.com/lesismal/llib v1.1.11-0.20230509073157-ed8bca47be2f
+	github.com/lesismal/nbio v1.3.13-0.20230509080555-7085c99918eb
 	github.com/lxzan/gws v1.4.4
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
