@@ -46,7 +46,7 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 		c.WriteMessage(mt, data)
 		atomic.AddUint64(&qps, 1)
 	})
-	_, err := u.UpgradeAndTransfer(w, r, nil)
+	_, err := u.UpgradeAndTransferStdConnToPoller(w, r, nil)
 	if err != nil {
 		log.Printf("upgrade: %v", err)
 		return
