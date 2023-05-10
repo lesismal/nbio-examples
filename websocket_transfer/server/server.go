@@ -40,11 +40,17 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	u.Engine = nbhttpEngine
 	u.BlockingModAsyncWrite = true
 	n := uint64(0)
+	u.OnOpen(func(c *websocket.Conn) {
+		log.Printf("OnOpen: %v", c.RemoteAddr().String())
+	})
 	u.OnMessage(func(c *websocket.Conn, mt websocket.MessageType, data []byte) {
 		atomic.AddUint64(&n, 1)
-		// fmt.Println("---mt:", n, mt, len(data), c.RemoteAddr().String())
+		// log.Println("---mt:", n, mt, len(data), c.RemoteAddr().String())
 		c.WriteMessage(mt, data)
 		atomic.AddUint64(&qps, 1)
+	})
+	u.OnClose(func(c *websocket.Conn, err error) {
+		log.Printf("OnClose: %v, %v", c.RemoteAddr().String(), err)
 	})
 	_, err := u.UpgradeAndTransferStdConnToPoller(w, r, nil)
 	if err != nil {
@@ -62,9 +68,9 @@ func startNBIO(tlsConfig *tls.Config) {
 
 	nbhttpEngine.Engine.OnClose(func(c *nbio.Conn, err error) {
 		c.MustExecute(func() {
-			upgrader, ok := c.Session().(nbhttp.Upgrader)
-			if ok && upgrader != nil {
-				upgrader.Close(nil, err)
+			wr, ok := c.Session().(*websocket.WebsocketReader)
+			if ok && wr != nil {
+				wr.Close(nil, err)
 			}
 		})
 	})
