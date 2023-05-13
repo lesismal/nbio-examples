@@ -70,7 +70,7 @@ func onNow(w http.ResponseWriter, r *http.Request) {
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	u := newUpgrader()
-	_, err := u.UpgradeAndTransferStdConnToPoller(w, r, nil)
+	_, err := u.UpgradeAndTransferConnToPoller(w, r, nil)
 	if err != nil {
 		log.Printf("upgrade: %v", err)
 		return
