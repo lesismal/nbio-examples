@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/lesismal/llib/std/crypto/tls"
-	"github.com/lesismal/nbio"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 )
@@ -23,19 +22,30 @@ var (
 	qps   uint64 = 0
 	total uint64 = 0
 
-	addrTLS    = "localhost:8081"
-	addrNonTLS = "localhost:8080"
+	addrTLS       = "localhost:8081"
+	addrNonTLS    = "localhost:8080"
+	addrNBHTTP    = "localhost:8082"
+	addrNBHTTPTLS = "localhost:8083"
 
+	muxHTTP          = &http.ServeMux{}
+	muxNBHTTP        = &http.ServeMux{}
 	nbhttpEngine     *nbhttp.Engine
 	httpServerTLS    = &http.Server{}
 	httpServerNonTLS = &http.Server{}
 )
 
-func onNow(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(time.Now().Format("20060102 15:04:05")))
+func init() {
+	muxHTTP.HandleFunc("/now", onNow)
+	muxHTTP.HandleFunc("/ws", onWebsocket)
+	muxHTTP.HandleFunc("/wss", onWebsocket)
+
+	muxNBHTTP.HandleFunc("/now", onNow)
+	muxNBHTTP.HandleFunc("/ws", onNBWebsocket)
+	muxNBHTTP.HandleFunc("/wss", onNBWebsocket)
+
 }
 
-func onWebsocket(w http.ResponseWriter, r *http.Request) {
+func newUpgrader() *websocket.Upgrader {
 	u := websocket.NewUpgrader()
 	u.Engine = nbhttpEngine
 	u.BlockingModAsyncWrite = true
@@ -52,7 +62,25 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	u.OnClose(func(c *websocket.Conn, err error) {
 		log.Printf("OnClose: %v, %v", c.RemoteAddr().String(), err)
 	})
+	return u
+}
+func onNow(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(time.Now().Format("20060102 15:04:05")))
+}
+
+func onWebsocket(w http.ResponseWriter, r *http.Request) {
+	u := newUpgrader()
 	_, err := u.UpgradeAndTransferStdConnToPoller(w, r, nil)
+	if err != nil {
+		log.Printf("upgrade: %v", err)
+		return
+	}
+	// log.Printf("OnOpen: %v", wsConn.RemoteAddr().String())
+}
+
+func onNBWebsocket(w http.ResponseWriter, r *http.Request) {
+	u := newUpgrader()
+	_, err := u.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("upgrade: %v", err)
 		return
@@ -62,17 +90,11 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 
 func startNBIO(tlsConfig *tls.Config) {
 	nbhttpEngine = nbhttp.NewEngine(nbhttp.Config{
+		Addrs:                   []string{addrNBHTTP},
+		AddrsTLS:                []string{addrNBHTTPTLS},
 		TLSConfig:               tlsConfig,
+		Handler:                 muxNBHTTP,
 		ReleaseWebsocketPayload: true,
-	})
-
-	nbhttpEngine.Engine.OnClose(func(c *nbio.Conn, err error) {
-		c.MustExecute(func() {
-			wr, ok := c.Session().(*websocket.WebsocketReader)
-			if ok && wr != nil {
-				wr.Close(nil, err)
-			}
-		})
 	})
 
 	err := nbhttpEngine.Start()
@@ -82,13 +104,8 @@ func startNBIO(tlsConfig *tls.Config) {
 	}
 }
 
-func startHTTP(server *http.Server, ln net.Listener, wsRouter string, chDone chan error) {
-	mux := &http.ServeMux{}
-	mux.HandleFunc("/now", onNow)
-	mux.HandleFunc(wsRouter, onWebsocket)
-
-	server.Handler = mux
-
+func startHTTP(server *http.Server, ln net.Listener, chDone chan error) {
+	server.Handler = muxHTTP
 	err := server.Serve(ln)
 	log.Printf("HTTP Server Exit: %v", err)
 	chDone <- err
@@ -115,14 +132,14 @@ func main() {
 	go startNBIO(tlsConfig)
 
 	chTLS := make(chan error, 1)
-	go startHTTP(httpServerTLS, lnTLS, "/wss", chTLS)
+	go startHTTP(httpServerTLS, lnTLS, chTLS)
 
 	lnTCP, err := net.Listen("tcp", addrNonTLS)
 	if err != nil {
 		panic(err)
 	}
 	chTCP := make(chan error, 1)
-	go startHTTP(httpServerNonTLS, lnTCP, "/ws", chTCP)
+	go startHTTP(httpServerNonTLS, lnTCP, chTCP)
 
 	go func() {
 		ticker := time.NewTicker(time.Second)
@@ -130,7 +147,7 @@ func main() {
 			<-ticker.C
 			n := atomic.SwapUint64(&qps, 0)
 			total += n
-			fmt.Printf("running for %v seconds, NumGoroutine: %v, websocket qps: %v, total: %v\n", i, runtime.NumGoroutine(), n, total)
+			fmt.Printf("running for %v seconds, Online: %v, NumGoroutine: %v, websocket qps: %v, total: %v\n", i, nbhttpEngine.Online(), runtime.NumGoroutine(), n, total)
 		}
 	}()
 
@@ -142,6 +159,10 @@ func main() {
 	defer cancel()
 	err = httpServerTLS.Shutdown(ctx)
 	log.Printf("httpServerTLS.Shutdown: %v", err)
+	err = httpServerNonTLS.Shutdown(ctx)
+	log.Printf("httpServerNonTLS.Shutdown: %v", err)
+	<-chTLS
+	<-chTCP
 	err = nbhttpEngine.Shutdown(ctx)
 	log.Printf("nbhttpEngine.Shutdown: %v", err)
 }
