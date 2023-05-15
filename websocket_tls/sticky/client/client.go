@@ -34,7 +34,7 @@ func main() {
 		nn = append(nn, 512*i)
 	}
 	clientNum := 4
-	pool := taskpool.NewFixedPool(clientNum, 1024)
+	pool := taskpool.New(clientNum, 1024)
 	wg := sync.WaitGroup{}
 	success := []int{}
 
@@ -52,7 +52,7 @@ func main() {
 		wg.Add(1)
 		n := l
 		idx := i % clientNum
-		pool.GoByIndex(idx, func() {
+		pool.Go(func() {
 			c := conns[idx]
 			defer wg.Done()
 			data := make([]byte, n)
@@ -86,6 +86,9 @@ func main() {
 			}
 
 			typ, message, err = c.ReadMessage()
+			if err != nil || nr != n {
+				log.Fatalf("ReadMessage: %v, %v, %v", typ, message, err)
+			}
 			if typ != websocket.BinaryMessage || !bytes.Equal(message, data) {
 				log.Fatalf("length: %v, typ: %v != %v, message != text: %v, %v", n, typ, websocket.TextMessage, len(message), string(message))
 			}

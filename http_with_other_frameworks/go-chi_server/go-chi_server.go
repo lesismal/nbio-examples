@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5"
-	"github.com/lesismal/nbio/nbhttp"
-	"github.com/lesismal/nbio/nbhttp/websocket"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/lesismal/nbio/nbhttp"
+	"github.com/lesismal/nbio/nbhttp/websocket"
 )
 
 func onHello(hrw http.ResponseWriter, req *http.Request) {
@@ -31,8 +32,7 @@ func onWebsocket(hrw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	wsConn := conn.(*websocket.Conn)
-	wsConn.OnClose(func(c *websocket.Conn, err error) {
+	conn.OnClose(func(c *websocket.Conn, err error) {
 		log.Println("OnClose:", c.RemoteAddr().String(), err)
 	})
 }

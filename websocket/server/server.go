@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	onDataFrame = flag.Bool("UseOnDataFrame", false, "Server will use OnDataFrame api instead of OnMessage")
+	onDataFrame      = flag.Bool("UseOnDataFrame", false, "Server will use OnDataFrame api instead of OnMessage")
 	errBeforeUpgrade = flag.Bool("error-before-upgrade", false, "return an error on upgrade with body")
 )
 
@@ -42,7 +42,7 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	if *errBeforeUpgrade {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("returning an error"))
-		return 
+		return
 	}
 	// time.Sleep(time.Second * 5)
 	upgrader := newUpgrader()
@@ -50,9 +50,8 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	wsConn := conn.(*websocket.Conn)
-	wsConn.SetReadDeadline(time.Time{})
-	fmt.Println("OnOpen:", wsConn.RemoteAddr().String())
+	conn.SetReadDeadline(time.Time{})
+	fmt.Println("OnOpen:", conn.RemoteAddr().String())
 }
 
 func main() {

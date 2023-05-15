@@ -55,11 +55,10 @@ func newUpgrader() *websocket.Upgrader {
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	upgrader := newUpgrader()
-	conn, err := upgrader.Upgrade(w, r, nil)
+	srcConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
-	srcConn := conn.(*websocket.Conn)
 
 	dialer := &websocket.Dialer{
 		Engine:      proxyServer.Engine,

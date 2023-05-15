@@ -34,8 +34,7 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	wsConn := conn.(*websocket.Conn)
-	fmt.Println("OnOpen:", wsConn.LocalAddr().String(), r.URL.Path)
+	fmt.Println("OnOpen:", conn.LocalAddr().String(), r.URL.Path)
 }
 
 func main() {

@@ -30,11 +30,10 @@ func onWebsocket(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	wsConn := conn.(*websocket.Conn)
-	wsConn.OnClose(func(c *websocket.Conn, err error) {
+	conn.OnClose(func(c *websocket.Conn, err error) {
 		log.Println("OnClose:", c.RemoteAddr().String(), err)
 	})
-	log.Println("OnOpen:", wsConn.RemoteAddr().String())
+	log.Println("OnOpen:", conn.RemoteAddr().String())
 }
 
 func main() {

@@ -30,8 +30,7 @@ func onWebsocket(ctx iris.Context) {
 	if err != nil {
 		panic(err)
 	}
-	wsConn := conn.(*websocket.Conn)
-	wsConn.OnClose(func(c *websocket.Conn, err error) {
+	conn.OnClose(func(c *websocket.Conn, err error) {
 		log.Println("OnClose:", c.RemoteAddr().String(), err)
 	})
 }

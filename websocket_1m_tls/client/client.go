@@ -34,7 +34,7 @@ func main() {
 
 	wg := sync.WaitGroup{}
 	conns := make([]*websocket.Conn, connNum)
-	pool := taskpool.NewFixedNoOrderPool(8, 1024)
+	pool := taskpool.New(8, 1024)
 
 	go func() {
 		for i := 0; i < connNum; i++ {

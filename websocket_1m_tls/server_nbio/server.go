@@ -37,8 +37,7 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	wsConn := conn.(*websocket.Conn)
-	wsConn.SetReadDeadline(time.Time{})
+	conn.SetReadDeadline(time.Time{})
 }
 
 func main() {

@@ -45,9 +45,8 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	wsConn := conn.(*websocket.Conn)
 	if *print {
-		fmt.Println("OnOpen:", wsConn.RemoteAddr().String())
+		fmt.Println("OnOpen:", conn.RemoteAddr().String())
 	}
 }
 

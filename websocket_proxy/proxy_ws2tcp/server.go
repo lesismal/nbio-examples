@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -46,11 +47,10 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	upgrader := newUpgrader()
-	conn, err := upgrader.Upgrade(w, r, nil)
+	srcConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
-	srcConn := conn.(*websocket.Conn)
 
 	// step 3: get tcp conns from both src and dst ws conn
 	srcNBConn, _ := srcConn.Conn.(*nbio.Conn)
@@ -78,8 +78,8 @@ func main() {
 	})
 
 	// close peer
-	proxyServer.OnClose(func(c *nbio.Conn, err error) {
-		session := c.Session()
+	proxyServer.OnClose(func(c net.Conn, err error) {
+		session := c.(*nbio.Conn).Session()
 		if session != nil {
 			if nbc, ok := session.(*nbio.Conn); ok {
 				nbc.Close()
