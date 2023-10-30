@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
+	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 )
 
@@ -39,9 +44,25 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/ws", onWebsocket)
-	server := http.Server{
-		Addr:    "localhost:8080",
-		Handler: mux,
+	engine := nbhttp.NewEngine(nbhttp.Config{
+		Network:                 "tcp",
+		Addrs:                   []string{"localhost:8080"},
+		MaxLoad:                 1000000,
+		ReleaseWebsocketPayload: true,
+		Handler:                 mux,
+	})
+
+	err := engine.Start()
+	if err != nil {
+		fmt.Printf("nbio.Start failed: %v\n", err)
+		return
 	}
-	fmt.Println("server exit:", server.ListenAndServe())
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+	<-interrupt
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	engine.Shutdown(ctx)
 }
