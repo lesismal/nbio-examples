@@ -14,24 +14,16 @@ import (
 )
 
 var (
-	onDataFrame      = flag.Bool("UseOnDataFrame", false, "Server will use OnDataFrame api instead of OnMessage")
-	errBeforeUpgrade = flag.Bool("error-before-upgrade", false, "return an error on upgrade with body")
+	upgrader = newUpgrader()
 )
 
 func newUpgrader() *websocket.Upgrader {
 	u := websocket.NewUpgrader()
-	if *onDataFrame {
-		u.OnDataFrame(func(c *websocket.Conn, messageType websocket.MessageType, fin bool, data []byte) {
-			// echo
-			c.WriteFrame(messageType, true, fin, data)
-		})
-	} else {
-		u.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
-			// echo
-			c.WriteMessage(messageType, data)
-		})
-	}
-
+	u.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
+		// echo
+		fmt.Println("OnMessage:", messageType, string(data))
+		c.WriteMessage(messageType, data)
+	})
 	u.OnClose(func(c *websocket.Conn, err error) {
 		fmt.Println("OnClose:", c.RemoteAddr().String(), err)
 	})
@@ -39,18 +31,10 @@ func newUpgrader() *websocket.Upgrader {
 }
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
-	if *errBeforeUpgrade {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte("returning an error"))
-		return
-	}
-	// time.Sleep(time.Second * 5)
-	upgrader := newUpgrader()
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
-	conn.SetReadDeadline(time.Time{})
 	fmt.Println("OnOpen:", conn.RemoteAddr().String())
 }
 
@@ -61,7 +45,7 @@ func main() {
 
 	svr := nbhttp.NewServer(nbhttp.Config{
 		Network: "tcp",
-		Addrs:   []string{"localhost:8888"},
+		Addrs:   []string{"localhost:8080"},
 		Handler: mux,
 	})
 
