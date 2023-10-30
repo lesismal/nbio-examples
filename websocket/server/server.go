@@ -1,15 +1,9 @@
 package main
 
 import (
-	"context"
-	"flag"
 	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
-	"time"
 
-	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 )
 
@@ -19,6 +13,10 @@ var (
 
 func newUpgrader() *websocket.Upgrader {
 	u := websocket.NewUpgrader()
+	u.OnOpen(func(c *websocket.Conn) {
+		// echo
+		fmt.Println("OnOpen:", c.RemoteAddr().String())
+	})
 	u.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
 		// echo
 		fmt.Println("OnMessage:", messageType, string(data))
@@ -35,30 +33,15 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("OnOpen:", conn.RemoteAddr().String())
+	fmt.Println("Upgraded:", conn.RemoteAddr().String())
 }
 
 func main() {
-	flag.Parse()
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/ws", onWebsocket)
-
-	svr := nbhttp.NewServer(nbhttp.Config{
-		Network: "tcp",
-		Addrs:   []string{"localhost:8080"},
+	server := http.Server{
+		Addr:    "localhost:8080",
 		Handler: mux,
-	})
-
-	err := svr.Start()
-	if err != nil {
-		fmt.Printf("nbio.Start failed: %v\n", err)
-		return
 	}
-
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-	<-interrupt
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-	svr.Shutdown(ctx)
+	fmt.Println("server exit:", server.ListenAndServe())
 }
