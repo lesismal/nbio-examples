@@ -28,7 +28,6 @@ func main() {
 		Certificates:       []tls.Certificate{cert},
 		InsecureSkipVerify: true,
 	}
-	tlsConfig.BuildNameToCertificate()
 
 	g := nbio.NewGopher(nbio.Config{
 		Network: "tcp",

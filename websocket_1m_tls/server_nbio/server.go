@@ -55,7 +55,6 @@ func main() {
 		Certificates:       []tls.Certificate{cert},
 		InsecureSkipVerify: true,
 	}
-	tlsConfig.BuildNameToCertificate()
 
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/wss", onWebsocket)

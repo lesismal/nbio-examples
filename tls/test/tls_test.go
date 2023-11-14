@@ -46,7 +46,6 @@ func server(ctx context.Context, cancelFunc context.CancelFunc, readCount int) {
 		Certificates:       []ltls.Certificate{cert},
 		InsecureSkipVerify: true,
 	}
-	tlsConfig.BuildNameToCertificate()
 
 	g := nbio.NewGopher(nbio.Config{
 		Network: "tcp",

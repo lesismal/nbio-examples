@@ -16,7 +16,7 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/lesismal/llib v1.1.12
-	github.com/lesismal/nbio v1.3.19-0.20231026122818-6cf29cb7f391
+	github.com/lesismal/nbio v1.3.20-0.20231114095940-222ef60ed1a1
 	github.com/lxzan/gws v1.4.4
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
