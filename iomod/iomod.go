@@ -25,7 +25,7 @@ import (
 var (
 	stdTLSConfig      *tls.Config
 	nbTLSConfig       *ltls.Config
-	maxBlockingOnline = 1
+	maxBlockingOnline = 50
 
 	engineTransfer *nbhttp.Engine
 
@@ -151,7 +151,7 @@ func init() {
 
 	err = engineTransfer.Start()
 	if err != nil {
-		panic(fmt.Errorf("nbio.Start failed: %v\n", err))
+		panic(fmt.Errorf("nbio.Start failed: %v", err))
 	}
 
 	upgraderTransfer.Engine = engineTransfer
@@ -272,7 +272,7 @@ func newNBHTTPServer(addr string, handler http.Handler, ioMod int, tlsConfig *lt
 
 	err := engine.Start()
 	if err != nil {
-		panic(fmt.Errorf("nbio.Start failed: %v\n", err))
+		panic(fmt.Errorf("nbio.Start failed: %v", err))
 	}
 	return engine
 }
@@ -349,13 +349,13 @@ func websocketTest(tag string, wg *sync.WaitGroup, addr, path string, isTLS bool
 	}
 	defer c.Close()
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second / 5)
 
 	data := []byte("hello world")
 	websocketEcho(tag, c, gorillaWs.TextMessage, data)
 	websocketEcho(tag, c, gorillaWs.BinaryMessage, data)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second / 5)
 }
 
 func clients(tag, addr string, isTLS bool) {
