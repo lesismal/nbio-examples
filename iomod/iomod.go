@@ -70,19 +70,28 @@ var (
 )
 
 func main() {
-	var ctx context.Context
-	var cancel func()
+	wgShutdown := sync.WaitGroup{}
+	wgShutdown.Add(1)
+	fnsShutdown := []func(ctx context.Context){
+		func(ctx context.Context) {
+			defer wgShutdown.Done()
+			engineTransfer.Shutdown(ctx)
+		},
+	}
 	for _, config := range allAddrs {
+		wgShutdown.Add(1)
 		if config.ioMod < 0 {
-			s := newHTTPServer(config.addr, config.handler, config.stdTLSConfig)
-			defer func() {
+			s := newHTTPServer(config.tag, config.addr, config.handler, config.stdTLSConfig)
+			fnsShutdown = append(fnsShutdown, func(ctx context.Context) {
+				defer wgShutdown.Done()
 				s.Shutdown(ctx)
-			}()
+			})
 		} else {
-			s := newNBHTTPServer(config.addr, config.handler, config.ioMod, config.nbTLSConfig)
-			defer func() {
+			s := newNBHTTPServer(config.tag, config.addr, config.handler, config.ioMod, config.nbTLSConfig)
+			fnsShutdown = append(fnsShutdown, func(ctx context.Context) {
+				defer wgShutdown.Done()
 				s.Shutdown(ctx)
-			}()
+			})
 		}
 	}
 
@@ -93,9 +102,12 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 	<-interrupt
-	ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	engineTransfer.Shutdown(ctx)
+	for _, fn := range fnsShutdown {
+		go fn(ctx)
+	}
+	wgShutdown.Wait()
 }
 
 func init() {
@@ -225,7 +237,7 @@ func onWebsocketUpgradeWithoutHandlingReadForConnFromSTDServer(w http.ResponseWr
 	fmt.Println("UpgradeWithoutHandlingReadForConnFromSTDServer:", conn.RemoteAddr().String())
 }
 
-func newHTTPServer(addr string, handler http.Handler, tlsConfig *tls.Config) *http.Server {
+func newHTTPServer(tag, addr string, handler http.Handler, tlsConfig *tls.Config) *http.Server {
 	server := &http.Server{
 		Addr:      addr,
 		Handler:   handler,
@@ -233,7 +245,7 @@ func newHTTPServer(addr string, handler http.Handler, tlsConfig *tls.Config) *ht
 	}
 	if tlsConfig == nil {
 		go func() {
-			log.Println("http server exit:", server.ListenAndServe())
+			log.Printf("http server [%v] exit: %v", tag, server.ListenAndServe())
 		}()
 	} else {
 		go func() {
@@ -242,14 +254,14 @@ func newHTTPServer(addr string, handler http.Handler, tlsConfig *tls.Config) *ht
 				panic(err)
 			}
 			tlsListener := tls.NewListener(ln, tlsConfig)
-			log.Println("http server tls exit:", server.Serve(tlsListener))
+			log.Printf("http server tls [%v] exit: %v", tag, server.Serve(tlsListener))
 		}()
 	}
 
 	return server
 }
 
-func newNBHTTPServer(addr string, handler http.Handler, ioMod int, tlsConfig *ltls.Config) *nbhttp.Engine {
+func newNBHTTPServer(tag, addr string, handler http.Handler, ioMod int, tlsConfig *ltls.Config) *nbhttp.Engine {
 	addrs := []string{}
 	addrsTLS := []string{}
 	if tlsConfig == nil {
@@ -259,6 +271,7 @@ func newNBHTTPServer(addr string, handler http.Handler, ioMod int, tlsConfig *lt
 	}
 
 	engine := nbhttp.NewEngine(nbhttp.Config{
+		Name:                    tag,
 		Network:                 "tcp",
 		Addrs:                   addrs,
 		AddrsTLS:                addrsTLS,
