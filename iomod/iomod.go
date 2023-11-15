@@ -5,13 +5,11 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"os/signal"
 	"sync"
 	"time"
 
@@ -99,9 +97,9 @@ func main() {
 	for _, config := range allAddrs {
 		clients(config.tag, config.addr, ((config.stdTLSConfig != nil) || (config.nbTLSConfig != nil)))
 	}
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-	<-interrupt
+	// interrupt := make(chan os.Signal, 1)
+	// signal.Notify(interrupt, os.Interrupt)
+	// <-interrupt
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	for _, fn := range fnsShutdown {
@@ -303,50 +301,81 @@ func httpTest(tag, addr string, isTLS bool) {
 	}
 	req, err := http.NewRequest("GET", urlstr, nil)
 	if err != nil {
-		log.Fatalf("[%s] NewRequest failed: %v", tag, err)
+		log.Fatalf("[%s] http client NewRequest failed: %v", tag, err)
 	}
 
 	res, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("[%s] client.Do failed: %v", tag, err)
+		log.Fatalf("[%s] http client client.Do failed: %v", tag, err)
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Fatalf("[%s] read body failed: %v", tag, err)
+		log.Fatalf("[%s] http client read body failed: %v", tag, err)
 	}
 
-	log.Printf("[%s] http hello success, body: '%v'", tag, string(body))
+	log.Printf("[%s] http client hello success, body: '%v'", tag, string(body))
+	if isTLS {
+		return
+	}
+
+	nbClient := &nbhttp.Client{
+		Engine:          engineTransfer,
+		Timeout:         time.Second * 3,
+		MaxConnsPerHost: 5,
+	}
+
+	done := make(chan struct{})
+	nbClient.Do(req, func(res *http.Response, conn net.Conn, err error) {
+		defer func() {
+			close(done)
+		}()
+		if err != nil {
+			log.Fatalf("[%s] nbhttp client.Do failed: %v", tag, err)
+			return
+		}
+		if err == nil && res.Body != nil {
+			defer res.Body.Close()
+		}
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			log.Fatalf("[%s] nbhttp client read body failed: %v", tag, err)
+		}
+
+		log.Printf("[%s] nbhttp client hello success, body: '%v'", tag, string(body))
+	})
+	<-done
 }
 
-func websocketEcho(tag string, c *gorillaWs.Conn, messageType int, data []byte) {
+var messageTypeString = map[int]string{
+	gorillaWs.TextMessage:   "TextMessage",
+	gorillaWs.BinaryMessage: "BinaryMessage",
+}
+
+func gorillaWebsocketEcho(tag string, c *gorillaWs.Conn, messageType int, data []byte) {
 	err := c.WriteMessage(messageType, data)
 	if err != nil {
-		log.Fatalf("[%s] WriteMessage failed: %v, %v", tag, c.LocalAddr().String(), err)
+		log.Fatalf("[%s] gorillaWs websocket client WriteMessage failed: %v, %v", tag, c.LocalAddr().String(), err)
 	}
 
 	receiveType, message, err := c.ReadMessage()
 	if err != nil {
-		log.Fatalf("[%s] ReadMessage failed: %v %v", tag, c.LocalAddr().String(), err)
+		log.Fatalf("[%s] gorillaWs websocket client ReadMessage failed: %v %v", tag, c.LocalAddr().String(), err)
 	}
 
 	if receiveType != messageType {
-		log.Fatalf("[%s] invalid messageType: %v", tag, c.LocalAddr().String())
+		log.Fatalf("[%s] gorillaWs websocket client invalid messageType: %v", tag, c.LocalAddr().String())
 	}
 
 	if !bytes.Equal(data, message) {
-		log.Fatalf("[%s] invalid data: %v", tag, c.LocalAddr().String())
+		log.Fatalf("[%s] gorillaWs websocket client invalid data: %v", tag, c.LocalAddr().String())
 	}
 
-	messageTypeString := map[int]string{
-		gorillaWs.TextMessage:   "TextMessage",
-		gorillaWs.BinaryMessage: "BinaryMessage",
-	}
-	log.Printf("[%s] gorillaWs echo success, messageType: [%v], data: '%v'", tag, messageTypeString[messageType], string(data))
+	log.Printf("[%s] gorillaWs websocket client echo success, messageType: [%v], data: '%v'", tag, messageTypeString[messageType], string(data))
 }
 
-func websocketTest(tag string, wg *sync.WaitGroup, addr, path string, isTLS bool) {
+func gorillaWebsocketTest(tag string, wg *sync.WaitGroup, addr, path string, isTLS bool) {
 	defer wg.Done()
 
 	u := url.URL{Scheme: "ws", Host: addr, Path: path}
@@ -358,16 +387,70 @@ func websocketTest(tag string, wg *sync.WaitGroup, addr, path string, isTLS bool
 	}
 	c, _, err := gorillaWs.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		log.Fatalf("[%s] dial failed: %v", tag, err)
+		log.Fatalf("[%s] gorillaWs websocket client dial failed: %v", tag, err)
 	}
 	defer c.Close()
 
 	time.Sleep(time.Second / 5)
 
 	data := []byte("hello world")
-	websocketEcho(tag, c, gorillaWs.TextMessage, data)
-	websocketEcho(tag, c, gorillaWs.BinaryMessage, data)
+	gorillaWebsocketEcho(tag, c, gorillaWs.TextMessage, data)
+	gorillaWebsocketEcho(tag, c, gorillaWs.BinaryMessage, data)
 
+	time.Sleep(time.Second / 5)
+}
+
+func nbWebsocketTest(tag string, wg *sync.WaitGroup, addr, path string, isTLS bool) {
+	defer wg.Done()
+
+	u := url.URL{Scheme: "ws", Host: addr, Path: path}
+	if isTLS {
+		u.Scheme = "wss"
+	}
+
+	cnt := 0
+	done := make(chan struct{})
+	data := []byte("hello world")
+	upgrader := websocket.NewUpgrader()
+	upgrader.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, message []byte) {
+		switch cnt {
+		case 0:
+			if messageType != websocket.TextMessage {
+				log.Fatalf("[%s] nb websocket client invalid messageType: %v", tag, c.LocalAddr().String())
+			}
+			if !bytes.Equal(data, message) {
+				log.Fatalf("[%s] nb websocket client invalid data: %v", tag, c.LocalAddr().String())
+			}
+			log.Printf("[%s] nb websocket client  echo success, messageType: [%v], data: '%v'", tag, messageTypeString[int(messageType)], string(data))
+		case 1:
+			if messageType != websocket.BinaryMessage {
+				log.Fatalf("[%s] nb websocket client invalid messageType: %v", tag, c.LocalAddr().String())
+			}
+			if !bytes.Equal(data, message) {
+				log.Fatalf("[%s] nb websocket client invalid data: %v", tag, c.LocalAddr().String())
+			}
+			log.Printf("[%s] nb websocket client echo success, messageType: [%v], data: '%v'", tag, messageTypeString[int(messageType)], string(data))
+			close(done)
+		default:
+		}
+		cnt++
+	})
+	dialer := &websocket.Dialer{
+		Engine:          engineTransfer,
+		Upgrader:        upgrader,
+		DialTimeout:     time.Second * 5,
+		TLSClientConfig: &ltls.Config{InsecureSkipVerify: true},
+	}
+	c, _, err := dialer.Dial(u.String(), nil)
+	if err != nil {
+		log.Fatalf("[%s] nb websocket client dial failed: %v", tag, err)
+		return
+	}
+	defer c.Close()
+	c.WriteMessage(websocket.TextMessage, data)
+	c.WriteMessage(websocket.BinaryMessage, data)
+
+	<-done
 	time.Sleep(time.Second / 5)
 }
 
@@ -381,7 +464,10 @@ func clients(tag, addr string, isTLS bool) {
 	wg := &sync.WaitGroup{}
 	for j := 0; j < maxBlockingOnline*2; j++ {
 		wg.Add(1)
-		go websocketTest(tag, wg, addr, wsUrls[i%len(wsUrls)], isTLS)
+		go nbWebsocketTest(tag, wg, addr, wsUrls[i%len(wsUrls)], isTLS)
+		i++
+		wg.Add(1)
+		go gorillaWebsocketTest(tag, wg, addr, wsUrls[i%len(wsUrls)], isTLS)
 		i++
 	}
 	wg.Wait()
