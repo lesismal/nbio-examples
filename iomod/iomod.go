@@ -288,42 +288,56 @@ func newNBHTTPServer(tag, addr string, handler http.Handler, ioMod int, tlsConfi
 	return engine
 }
 
-func httpTest(tag, addr string, isTLS bool) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{
-		Transport: tr,
-	}
+func httpTest(wg *sync.WaitGroup, tag, addr string, isTLS bool) {
+	defer wg.Done()
+
 	urlstr := fmt.Sprintf("http://%s/onHTTP", addr)
 	if isTLS {
 		urlstr = fmt.Sprintf("https://%s/onHTTP", addr)
 	}
 	req, err := http.NewRequest("GET", urlstr, nil)
 	if err != nil {
-		log.Fatalf("[%s] http client NewRequest failed: %v", tag, err)
+		log.Fatalf("[%s] std http client NewRequest failed: %v", tag, err)
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
 	}
 
 	res, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("[%s] http client client.Do failed: %v", tag, err)
+		log.Fatalf("[%s] std http client client.Do failed: %v", tag, err)
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Fatalf("[%s] http client read body failed: %v", tag, err)
+		log.Fatalf("[%s] std http client read body failed: %v", tag, err)
 	}
 
-	log.Printf("[%s] http client hello success, body: '%v'", tag, string(body))
+	log.Printf("[%s] std http client hello success, body: '%v'", tag, string(body))
+}
+
+func nbhttpTest(wg *sync.WaitGroup, tag, addr string, isTLS bool) {
+	defer wg.Done()
+
+	urlstr := fmt.Sprintf("http://%s/onHTTP", addr)
 	if isTLS {
-		return
+		urlstr = fmt.Sprintf("https://%s/onHTTP", addr)
+	}
+	req, err := http.NewRequest("GET", urlstr, nil)
+	if err != nil {
+		log.Fatalf("[%s] nb http client NewRequest failed: %v", tag, err)
 	}
 
 	nbClient := &nbhttp.Client{
 		Engine:          engineTransfer,
 		Timeout:         time.Second * 3,
 		MaxConnsPerHost: 5,
+		TLSClientConfig: &ltls.Config{InsecureSkipVerify: true},
 	}
 
 	done := make(chan struct{})
@@ -332,7 +346,7 @@ func httpTest(tag, addr string, isTLS bool) {
 			close(done)
 		}()
 		if err != nil {
-			log.Fatalf("[%s] nbhttp client.Do failed: %v", tag, err)
+			log.Fatalf("[%s] nb http client.Do failed: %v", tag, err)
 			return
 		}
 		if err == nil && res.Body != nil {
@@ -340,10 +354,10 @@ func httpTest(tag, addr string, isTLS bool) {
 		}
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.Fatalf("[%s] nbhttp client read body failed: %v", tag, err)
+			log.Fatalf("[%s] nb http client read body failed: %v", tag, err)
 		}
 
-		log.Printf("[%s] nbhttp client hello success, body: '%v'", tag, string(body))
+		log.Printf("[%s] nb http client hello success, body: '%v'", tag, string(body))
 	})
 	<-done
 }
@@ -375,7 +389,7 @@ func gorillaWebsocketEcho(tag string, c *gorillaWs.Conn, messageType int, data [
 	log.Printf("[%s] gorillaWs websocket client echo success, messageType: [%v], data: '%v'", tag, messageTypeString[messageType], string(data))
 }
 
-func gorillaWebsocketTest(tag string, wg *sync.WaitGroup, addr, path string, isTLS bool) {
+func gorillaWebsocketTest(wg *sync.WaitGroup, tag string, addr, path string, isTLS bool) {
 	defer wg.Done()
 
 	u := url.URL{Scheme: "ws", Host: addr, Path: path}
@@ -400,7 +414,7 @@ func gorillaWebsocketTest(tag string, wg *sync.WaitGroup, addr, path string, isT
 	time.Sleep(time.Second / 5)
 }
 
-func nbWebsocketTest(tag string, wg *sync.WaitGroup, addr, path string, isTLS bool) {
+func nbWebsocketTest(wg *sync.WaitGroup, tag string, addr, path string, isTLS bool) {
 	defer wg.Done()
 
 	u := url.URL{Scheme: "ws", Host: addr, Path: path}
@@ -458,16 +472,20 @@ func clients(tag, addr string, isTLS bool) {
 	fmt.Printf("------------------ %s start ------------------\n", tag)
 	defer fmt.Printf("------------------ %s done ------------------\n", tag)
 
-	httpTest(tag, addr, isTLS)
-
 	i := 0
 	wg := &sync.WaitGroup{}
 	for j := 0; j < maxBlockingOnline*2; j++ {
 		wg.Add(1)
-		go nbWebsocketTest(tag, wg, addr, wsUrls[i%len(wsUrls)], isTLS)
+		httpTest(wg, tag, addr, isTLS)
+
+		wg.Add(1)
+		nbhttpTest(wg, tag, addr, isTLS)
+
+		wg.Add(1)
+		go nbWebsocketTest(wg, tag, addr, wsUrls[i%len(wsUrls)], isTLS)
 		i++
 		wg.Add(1)
-		go gorillaWebsocketTest(tag, wg, addr, wsUrls[i%len(wsUrls)], isTLS)
+		go gorillaWebsocketTest(wg, tag, addr, wsUrls[i%len(wsUrls)], isTLS)
 		i++
 	}
 	wg.Wait()
