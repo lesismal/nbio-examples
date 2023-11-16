@@ -21,6 +21,8 @@ var (
 	floodLargeMessage = flag.Bool("flood", false, "flood server with large messages")
 	noEcho            = flag.Bool("no-echo", false, "disables echo server message")
 	connectedClients  chan *websocket.Conn
+
+	upgrader = newUpgrader()
 )
 
 func newUpgrader() *websocket.Upgrader {
@@ -60,7 +62,7 @@ func main() {
 		u := url.URL{Scheme: "wss", Host: "localhost:8888", Path: "/wss"}
 		dialer := &websocket.Dialer{
 			Engine:          engine,
-			Upgrader:        newUpgrader(),
+			Upgrader:        upgrader,
 			DialTimeout:     time.Second * 3,
 			TLSClientConfig: tlsConfig,
 		}

@@ -43,10 +43,11 @@ func main() {
 	e.GET("/hello", onHello)
 	e.GET("/ws", onWebsocket)
 
-	svr := nbhttp.NewServer(nbhttp.Config{
+	svr := nbhttp.NewEngine(nbhttp.Config{
 		Network: "tcp",
 		Addrs:   []string{"localhost:8080"},
-	}, e, nil)
+		Handler: e,
+	})
 
 	err := svr.Start()
 	if err != nil {

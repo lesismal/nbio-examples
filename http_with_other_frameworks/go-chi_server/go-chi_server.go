@@ -43,7 +43,7 @@ func main() {
 	router.Get("/hello", onHello)
 	router.Get("/ws", onWebsocket)
 
-	svr := nbhttp.NewServer(nbhttp.Config{
+	svr := nbhttp.NewEngine(nbhttp.Config{
 		Network: "tcp",
 		Addrs:   []string{"localhost:8080"},
 	})

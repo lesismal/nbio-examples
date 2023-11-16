@@ -36,7 +36,7 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/echo", onEcho)
 
-	svr := nbhttp.NewServer(nbhttp.Config{
+	svr := nbhttp.NewEngine(nbhttp.Config{
 		Network: "tcp",
 		Addrs:   addrs,
 		MaxLoad: 1000000,

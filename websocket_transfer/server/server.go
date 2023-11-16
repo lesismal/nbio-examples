@@ -32,6 +32,8 @@ var (
 	nbhttpEngine     *nbhttp.Engine
 	httpServerTLS    = &http.Server{}
 	httpServerNonTLS = &http.Server{}
+
+	upgrader = newUpgrader()
 )
 
 func init() {
@@ -69,8 +71,7 @@ func onNow(w http.ResponseWriter, r *http.Request) {
 }
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
-	u := newUpgrader()
-	_, err := u.UpgradeAndTransferConnToPoller(w, r, nil)
+	_, err := upgrader.UpgradeAndTransferConnToPoller(w, r, nil)
 	if err != nil {
 		log.Printf("upgrade: %v", err)
 		return
@@ -79,8 +80,7 @@ func onWebsocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func onNBWebsocket(w http.ResponseWriter, r *http.Request) {
-	u := newUpgrader()
-	_, err := u.Upgrade(w, r, nil)
+	_, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("upgrade: %v", err)
 		return

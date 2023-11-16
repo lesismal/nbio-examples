@@ -45,7 +45,7 @@ func main() {
 		panic(err)
 	}
 
-	svr := nbhttp.NewServer(nbhttp.Config{
+	svr := nbhttp.NewEngine(nbhttp.Config{
 		Network: "tcp",
 		Addrs:   []string{"localhost:8080"},
 		Handler: app,

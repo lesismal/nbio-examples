@@ -18,7 +18,9 @@ var (
 	qps   uint64 = 0
 	total uint64 = 0
 
-	svr *nbhttp.Server
+	engine *nbhttp.Engine
+
+	upgrader = newUpgrader()
 )
 
 func newUpgrader() *websocket.Upgrader {
@@ -32,7 +34,6 @@ func newUpgrader() *websocket.Upgrader {
 }
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
-	upgrader := newUpgrader()
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
@@ -59,7 +60,7 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/wss", onWebsocket)
 
-	svr = nbhttp.NewServer(nbhttp.Config{
+	engine = nbhttp.NewEngine(nbhttp.Config{
 		Network:                 "tcp",
 		AddrsTLS:                addrs,
 		TLSConfig:               tlsConfig,
@@ -68,12 +69,12 @@ func main() {
 		Handler:                 mux,
 	})
 
-	err = svr.Start()
+	err = engine.Start()
 	if err != nil {
 		fmt.Printf("nbio.Start failed: %v\n", err)
 		return
 	}
-	defer svr.Stop()
+	defer engine.Stop()
 
 	ticker := time.NewTicker(time.Second)
 	for i := 1; true; i++ {

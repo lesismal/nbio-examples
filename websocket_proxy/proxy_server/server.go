@@ -18,7 +18,9 @@ var (
 
 	appServerAddr = "ws://localhost:9999/ws"
 
-	proxyServer *nbhttp.Server
+	proxyServer *nbhttp.Engine
+
+	upgrader = newUpgrader()
 )
 
 func msgType(messageType websocket.MessageType) string {
@@ -54,14 +56,13 @@ func newUpgrader() *websocket.Upgrader {
 }
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
-	upgrader := newUpgrader()
 	srcConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
 
 	dialer := &websocket.Dialer{
-		Engine:      proxyServer.Engine,
+		Engine:      proxyServer,
 		Upgrader:    newUpgrader(),
 		DialTimeout: time.Second * 3,
 	}
@@ -80,7 +81,7 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/ws", onWebsocket)
 
-	proxyServer = nbhttp.NewServer(nbhttp.Config{
+	proxyServer = nbhttp.NewEngine(nbhttp.Config{
 		Network: "tcp",
 		Addrs:   []string{proxyServerAddr},
 		Handler: mux,

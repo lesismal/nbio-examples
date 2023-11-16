@@ -15,8 +15,10 @@ import (
 )
 
 var (
-	svr   *nbhttp.Server
-	print = flag.Bool("print", false, "stdout output of echoed data")
+	engine *nbhttp.Engine
+	print  = flag.Bool("print", false, "stdout output of echoed data")
+
+	upgrader = newUpgrader()
 )
 
 func newUpgrader() *websocket.Upgrader {
@@ -40,7 +42,6 @@ func newUpgrader() *websocket.Upgrader {
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	// time.Sleep(time.Second * 5)
-	upgrader := newUpgrader()
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
@@ -65,19 +66,19 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/wss", onWebsocket)
 
-	svr = nbhttp.NewServer(nbhttp.Config{
+	engine = nbhttp.NewEngine(nbhttp.Config{
 		Network:   "tcp",
 		AddrsTLS:  []string{"localhost:8888"},
 		TLSConfig: tlsConfig,
 		Handler:   mux,
 	})
 
-	err = svr.Start()
+	err = engine.Start()
 	if err != nil {
 		fmt.Printf("nbio.Start failed: %v\n", err)
 		return
 	}
-	defer svr.Stop()
+	defer engine.Stop()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)

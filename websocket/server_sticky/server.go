@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	svr *nbhttp.Server
+	engine *nbhttp.Engine
 )
 
 func newUpgrader() *websocket.Upgrader {
@@ -43,18 +43,18 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/ws", onWebsocket)
 
-	svr = nbhttp.NewServer(nbhttp.Config{
+	engine = nbhttp.NewEngine(nbhttp.Config{
 		Network: "tcp",
 		Addrs:   []string{"localhost:28001"},
 		Handler: mux,
 	})
 
-	err := svr.Start()
+	err := engine.Start()
 	if err != nil {
 		fmt.Printf("nbio.Start failed: %v\n", err)
 		return
 	}
-	defer svr.Stop()
+	defer engine.Stop()
 
 	go runProxy("localhost:28000", "localhost:28001")
 

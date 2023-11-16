@@ -16,17 +16,21 @@ import (
 )
 
 var (
-	svr *nbhttp.Server
+	engine *nbhttp.Engine
+
+	upgrader = websocket.NewUpgrader()
 )
 
-func onWebsocket(w http.ResponseWriter, r *http.Request) {
-	upgrader := websocket.NewUpgrader()
+func init() {
 	upgrader.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
 		c.WriteMessage(messageType, data)
 	})
 	upgrader.OnClose(func(c *websocket.Conn, err error) {
 		fmt.Println("OnClose:", c.RemoteAddr().String(), err)
 	})
+}
+
+func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
@@ -55,19 +59,19 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/wss", onWebsocket)
 
-	svr = nbhttp.NewServer(nbhttp.Config{
+	engine = nbhttp.NewEngine(nbhttp.Config{
 		Network:   "tcp",
 		AddrsTLS:  []string{"localhost:8888"},
 		TLSConfig: tlsConfig,
 		Handler:   mux,
 	})
 
-	err = svr.Start()
+	err = engine.Start()
 	if err != nil {
 		fmt.Printf("nbio.Start failed: %v\n", err)
 		return
 	}
-	defer svr.Stop()
+	defer engine.Stop()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)

@@ -42,7 +42,7 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/echo", onEcho)
 
-	svr := nbhttp.NewServer(nbhttp.Config{
+	svr := nbhttp.NewEngine(nbhttp.Config{
 		Network:   "tcp",
 		AddrsTLS:  []string{"localhost:8888"},
 		TLSConfig: tlsConfig,

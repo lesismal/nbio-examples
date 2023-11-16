@@ -21,6 +21,8 @@ var (
 	bufferPool       = fixedbufferpool.NewFixedBufferPool(2000, 1*1024*1024, time.Second*10)
 	messagesReceived uint64
 	bytesReceived    uint64
+
+	upgrader = newUpgrader()
 )
 
 func newUpgrader() *websocket.Upgrader {
@@ -73,7 +75,6 @@ func newUpgrader() *websocket.Upgrader {
 
 func onWebsocket(w http.ResponseWriter, r *http.Request) {
 	// time.Sleep(time.Second * 5)
-	upgrader := newUpgrader()
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
@@ -96,7 +97,7 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/wss", onWebsocket)
 
-	svr := nbhttp.NewServer(nbhttp.Config{
+	svr := nbhttp.NewEngine(nbhttp.Config{
 		Network:                 "tcp",
 		AddrsTLS:                []string{"localhost:8888"},
 		TLSConfig:               tlsConfig,
