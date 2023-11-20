@@ -23,7 +23,7 @@ import (
 var (
 	stdTLSConfig      *tls.Config
 	nbTLSConfig       *ltls.Config
-	maxBlockingOnline = 50
+	maxBlockingOnline = 10
 
 	engineTransfer *nbhttp.Engine
 
@@ -208,31 +208,34 @@ func onHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func onWebsocketUpgrade(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Upgrade 111:", r.RemoteAddr)
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
 	conn.SetSession("Upgrade")
-	fmt.Println("Upgrade:", conn.RemoteAddr().String())
+	fmt.Println("Upgrade 222:", conn.RemoteAddr().String())
 }
 
 func onWebsocketUpgradeAndTransferConnToPoller(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("UpgradeAndTransferConnToPoller 111:", r.RemoteAddr)
 	conn, err := upgraderTransfer.UpgradeAndTransferConnToPoller(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
 	conn.SetSession("UpgradeAndTransferConnToPoller")
-	fmt.Println("UpgradeAndTransferConnToPoller:", conn.RemoteAddr().String())
+	fmt.Println("UpgradeAndTransferConnToPoller 222:", conn.RemoteAddr().String())
 }
 
 func onWebsocketUpgradeWithoutHandlingReadForConnFromSTDServer(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("UpgradeWithoutHandlingReadForConnFromSTDServer 111:", r.RemoteAddr)
 	conn, err := upgrader.UpgradeWithoutHandlingReadForConnFromSTDServer(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
 	conn.SetSession("UpgradeWithoutHandlingReadForConnFromSTDServer")
 	go conn.HandleRead(1024 * 4)
-	fmt.Println("UpgradeWithoutHandlingReadForConnFromSTDServer:", conn.RemoteAddr().String())
+	fmt.Println("UpgradeWithoutHandlingReadForConnFromSTDServer 222:", conn.RemoteAddr().String())
 }
 
 func newHTTPServer(tag, addr string, handler http.Handler, tlsConfig *tls.Config) *http.Server {
@@ -289,7 +292,10 @@ func newNBHTTPServer(tag, addr string, handler http.Handler, ioMod int, tlsConfi
 }
 
 func httpTest(wg *sync.WaitGroup, tag, addr string, isTLS bool) {
-	defer wg.Done()
+	defer func() {
+		time.Sleep(time.Second / 10)
+		wg.Done()
+	}()
 
 	urlstr := fmt.Sprintf("http://%s/onHTTP", addr)
 	if isTLS {
@@ -322,7 +328,10 @@ func httpTest(wg *sync.WaitGroup, tag, addr string, isTLS bool) {
 }
 
 func nbhttpTest(wg *sync.WaitGroup, tag, addr string, isTLS bool) {
-	defer wg.Done()
+	defer func() {
+		time.Sleep(time.Second / 10)
+		wg.Done()
+	}()
 
 	urlstr := fmt.Sprintf("http://%s/onHTTP", addr)
 	if isTLS {
@@ -390,7 +399,10 @@ func gorillaWebsocketEcho(tag string, c *gorillaWs.Conn, messageType int, data [
 }
 
 func gorillaWebsocketTest(wg *sync.WaitGroup, tag string, addr, path string, isTLS bool) {
-	defer wg.Done()
+	defer func() {
+		time.Sleep(time.Second / 10)
+		wg.Done()
+	}()
 
 	u := url.URL{Scheme: "ws", Host: addr, Path: path}
 	if isTLS {
@@ -415,7 +427,10 @@ func gorillaWebsocketTest(wg *sync.WaitGroup, tag string, addr, path string, isT
 }
 
 func nbWebsocketTest(wg *sync.WaitGroup, tag string, addr, path string, isTLS bool) {
-	defer wg.Done()
+	defer func() {
+		time.Sleep(time.Second / 10)
+		wg.Done()
+	}()
 
 	u := url.URL{Scheme: "ws", Host: addr, Path: path}
 	if isTLS {
@@ -472,7 +487,6 @@ func clients(tag, addr string, isTLS bool) {
 	fmt.Printf("------------------ %s start ------------------\n", tag)
 	defer fmt.Printf("------------------ %s done ------------------\n", tag)
 
-	i := 0
 	wg := &sync.WaitGroup{}
 	for j := 0; j < maxBlockingOnline*2; j++ {
 		wg.Add(1)
@@ -481,12 +495,15 @@ func clients(tag, addr string, isTLS bool) {
 		wg.Add(1)
 		nbhttpTest(wg, tag, addr, isTLS)
 
-		wg.Add(1)
-		go nbWebsocketTest(wg, tag, addr, wsUrls[i%len(wsUrls)], isTLS)
-		i++
-		wg.Add(1)
-		go gorillaWebsocketTest(wg, tag, addr, wsUrls[i%len(wsUrls)], isTLS)
-		i++
+		for k := 0; k < len(wsUrls); k++ {
+			wg.Add(1)
+			go nbWebsocketTest(wg, tag, addr, wsUrls[k%len(wsUrls)], isTLS)
+		}
+
+		for k := 0; k < len(wsUrls); k++ {
+			wg.Add(1)
+			go gorillaWebsocketTest(wg, tag, addr, wsUrls[k%len(wsUrls)], isTLS)
+		}
 	}
 	wg.Wait()
 }
