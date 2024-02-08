@@ -3,9 +3,6 @@ module github.com/lesismal/nbio-examples
 go 1.21.5
 
 require (
-	github.com/antlabs/quickws v0.1.9
-	github.com/buaazp/fasthttprouter v0.1.1
-	github.com/dgrr/fastws v1.0.4
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/gorilla/websocket v1.5.1
@@ -13,7 +10,6 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/lesismal/llib v1.1.13
 	github.com/lesismal/nbio v1.3.21
-	github.com/lxzan/gws v1.8.0
 	github.com/valyala/fasthttp v1.51.0
 	nhooyr.io/websocket v1.8.10
 )
@@ -25,11 +21,9 @@ require (
 	github.com/Joker/jade v1.1.3 // indirect
 	github.com/Shopify/goreferrer v0.0.0-20220729165902-8cddb4f5de06 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
-	github.com/antlabs/wsutil v0.1.6 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
-	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2/v4 v4.0.2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
