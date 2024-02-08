@@ -16,7 +16,7 @@ func main() {
 		request = []byte("hello")
 	)
 
-	g := nbio.NewGopher(nbio.Config{})
+	g := nbio.NewEngine(nbio.Config{})
 
 	done := make(chan int)
 	g.OnData(func(c *nbio.Conn, response []byte) {

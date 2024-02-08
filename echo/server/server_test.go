@@ -42,7 +42,7 @@ func writeComplete(c *nbio.Conn, data []byte) (int, error) {
 }
 
 func server(ready chan error) error {
-	g := nbio.NewGopher(nbio.Config{
+	g := nbio.NewEngine(nbio.Config{
 		Network:            "tcp",
 		Addrs:              []string{addr},
 		MaxWriteBufferSize: 6 * 1024 * 1024,

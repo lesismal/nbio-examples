@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	g := nbio.NewGopher(nbio.Config{})
+	g := nbio.NewEngine(nbio.Config{})
 	g.OnOpen(func(c *nbio.Conn) {
 		log.Println("OnOpen:", c.RemoteAddr().String())
 	})

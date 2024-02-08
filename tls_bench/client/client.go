@@ -83,7 +83,7 @@ func main() {
 		totalWrite int64
 	)
 
-	g := nbio.NewGopher(nbio.Config{})
+	g := nbio.NewEngine(nbio.Config{})
 	g.OnData(wrapData(func(c *nbio.Conn, tlsConn *tls.Conn, data []byte) {
 		session := c.Session().(*Session)
 		session.Buffer = append(session.Buffer, data...)

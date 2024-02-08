@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	g := nbio.NewGopher(nbio.Config{
+	g := nbio.NewEngine(nbio.Config{
 		Network:            "udp",
 		Addrs:              []string{"127.0.0.1:8888"},
 		MaxWriteBufferSize: 6 * 1024 * 1024,

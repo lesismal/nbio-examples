@@ -27,7 +27,7 @@ func main() {
 		addr = "localhost:8888"
 	)
 
-	g := nbio.NewGopher(nbio.Config{})
+	g := nbio.NewEngine(nbio.Config{})
 
 	isClient := true
 	g.OnOpen(tls.WrapOpen(tlsConfig, isClient, func(c *nbio.Conn, tlsConn *tls.Conn) {

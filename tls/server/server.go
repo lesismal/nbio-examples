@@ -18,7 +18,7 @@ func main() {
 		InsecureSkipVerify: true,
 	}
 
-	g := nbio.NewGopher(nbio.Config{
+	g := nbio.NewEngine(nbio.Config{
 		Network: "tcp",
 		Addrs:   []string{"localhost:8888"},
 	})

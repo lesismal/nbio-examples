@@ -11,7 +11,7 @@ import (
 // }
 
 func main() {
-	g := nbio.NewGopher(nbio.Config{
+	g := nbio.NewEngine(nbio.Config{
 		Network:  "tcp",
 		Addrs:    []string{"localhost:8888"},
 		EpollMod: nbio.EPOLLET,
