@@ -17,6 +17,7 @@ import (
 var (
 	ioPath     = "/xxx"
 	videoPath  = "/mv.mp4"
+	filePath   = "." + videoPath
 	fileSize   = 500627803
 	defaultBuf = make([]byte, fileSize)
 
@@ -90,7 +91,8 @@ func client() {
 		if err != nil {
 			panic(err)
 		}
-		os.WriteFile("./aaa.mp4", body, 0777)
+		os.WriteFile(filePath, body, 0777)
+		defer os.RemoveAll(filePath)
 	}
 
 	res, err = http.ReadResponse(reader, reqIO2)
@@ -131,6 +133,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("engine.Start failed: %v", err)
 	}
+
+	err = os.MkdirAll("./static", 0777)
+	if err != nil {
+		log.Fatalf("MkdirAll failed: %v", err)
+	}
+	err = os.WriteFile("./static"+videoPath, defaultBuf, 0777)
+	if err != nil {
+		log.Fatalf("WriteFile failed: %v", err)
+	}
+	defer os.RemoveAll("./static")
 
 	time.AfterFunc(time.Second/10, client)
 

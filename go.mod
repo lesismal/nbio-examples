@@ -9,7 +9,7 @@ require (
 	github.com/kataras/iris/v12 v12.2.10
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/lesismal/llib v1.1.13
-	github.com/lesismal/nbio v1.3.21
+	github.com/lesismal/nbio v1.3.22-0.20240213121251-50b8c1f573ae
 	github.com/valyala/fasthttp v1.51.0
 	nhooyr.io/websocket v1.8.10
 )
@@ -72,7 +72,7 @@ require (
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
 	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
