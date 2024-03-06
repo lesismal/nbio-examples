@@ -55,8 +55,12 @@ func main() {
 			}
 			c, res, err := dialer.Dial(u.String(), nil)
 			if err != nil {
-				bReason, _ := io.ReadAll(res.Body)
-				fmt.Printf("dial: %v, reason: %v\n", err, string(bReason))
+				if res != nil && res.Body != nil {
+					bReason, _ := io.ReadAll(res.Body)
+					fmt.Printf("dial failed: %v, reason: %v\n", err, string(bReason))
+				} else {
+					fmt.Printf("dial failed: %v\n", err)
+				}
 				return
 			}
 			c.WriteMessage(websocket.TextMessage, []byte("hello"))
