@@ -16,6 +16,8 @@ func main() {
 		UDPReadTimeout:     time.Second,
 	})
 
+	// For the same socket connection(same LocalAddr() and RemoteAddr()),
+	// all the *nbio.Conn passed to users in OnOpen/OnData/OnClose handler is the same pointer
 	g.OnOpen(func(c *nbio.Conn) {
 		log.Printf("onOpen: [%p, %v]", c, c.RemoteAddr().String())
 	})
