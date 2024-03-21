@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	g := nbio.NewEngine(nbio.Config{
+	engine := nbio.NewEngine(nbio.Config{
 		Network:            "udp",
 		Addrs:              []string{"127.0.0.1:8888"},
 		MaxWriteBufferSize: 6 * 1024 * 1024,
@@ -18,23 +18,23 @@ func main() {
 
 	// For the same socket connection(same LocalAddr() and RemoteAddr()),
 	// all the *nbio.Conn passed to users in OnOpen/OnData/OnClose handler is the same pointer
-	g.OnOpen(func(c *nbio.Conn) {
+	engine.OnOpen(func(c *nbio.Conn) {
 		log.Printf("onOpen: [%p, %v]", c, c.RemoteAddr().String())
 	})
-	g.OnData(func(c *nbio.Conn, data []byte) {
+	engine.OnData(func(c *nbio.Conn, data []byte) {
 		log.Printf("onData: [%p, %v], %v", c, c.RemoteAddr().String(), string(data))
 		c.Write(append([]byte{}, data...))
 	})
-	g.OnClose(func(c *nbio.Conn, err error) {
+	engine.OnClose(func(c *nbio.Conn, err error) {
 		log.Printf("onClose: [%p, %v], %v", c, c.RemoteAddr().String(), err)
 	})
 
-	err := g.Start()
+	err := engine.Start()
 	if err != nil {
 		fmt.Printf("nbio.Start failed: %v\n", err)
 		return
 	}
-	defer g.Stop()
+	defer engine.Stop()
 
 	g.Wait()
 }
