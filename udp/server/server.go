@@ -36,5 +36,5 @@ func main() {
 	}
 	defer engine.Stop()
 
-	g.Wait()
+	<-make(chan int)
 }
