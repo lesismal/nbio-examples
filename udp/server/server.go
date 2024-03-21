@@ -11,7 +11,7 @@ import (
 func main() {
 	engine := nbio.NewEngine(nbio.Config{
 		Network:            "udp",
-		Addrs:              []string{"127.0.0.1:8888"},
+		Addrs:              []string{"127.0.0.1:8080"},
 		MaxWriteBufferSize: 6 * 1024 * 1024,
 		UDPReadTimeout:     time.Second,
 	})
