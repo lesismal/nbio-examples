@@ -9,7 +9,7 @@ require (
 	github.com/kataras/iris/v12 v12.2.10
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/lesismal/llib v1.1.13
-	github.com/lesismal/nbio v1.5.9-0.20240507160822-89ba14116195
+	github.com/lesismal/nbio v1.5.9
 	github.com/valyala/fasthttp v1.51.0
 	nhooyr.io/websocket v1.8.10
 )
