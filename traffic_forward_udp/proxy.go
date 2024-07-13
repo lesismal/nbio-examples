@@ -29,7 +29,7 @@ func main() {
 	time.AfterFunc(time.Second, client)
 
 	engine := nbio.NewEngine(nbio.Config{
-		Network:            "tcp",
+		Network:            "udp",
 		Addrs:              []string{proxyAddr},
 		MaxWriteBufferSize: 6 * 1024 * 1024,
 	})
@@ -37,8 +37,8 @@ func main() {
 	engine.OnOpen(func(srcConn *nbio.Conn) {
 		sess := &Session{}
 		srcConn.SetSession(sess)
-		// engine.DialAsync("tcp", dstAddr,  func(dstConn *nbio.Conn, err error) {
-		engine.DialAsyncTimeout("tcp", serverAddr, time.Second*3, func(dstConn *nbio.Conn, err error) {
+		// engine.DialAsync("udp", dstAddr,  func(dstConn *nbio.Conn, err error) {
+		engine.DialAsyncTimeout("udp", serverAddr, time.Second*3, func(dstConn *nbio.Conn, err error) {
 			if err != nil {
 				srcConn.Close()
 				return
@@ -83,31 +83,32 @@ func main() {
 }
 
 func server() {
-	ln, err := net.Listen("tcp", serverAddr)
+	addr, err := net.ResolveUDPAddr("udp", serverAddr)
+	if err != nil {
+		panic(1)
+	}
+	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		panic(err)
 	}
+	defer conn.Close()
+
+	buf := make([]byte, 1024)
 	for {
-		c, err := ln.Accept()
+		packLen, remoteAddr, err := conn.ReadFromUDP(buf)
 		if err == nil {
-			go func(conn net.Conn) {
-				buf := make([]byte, 1024)
-				for {
-					n, err := conn.Read(buf)
-					if err != nil {
-						conn.Close()
-						return
-					}
-					// echo
-					conn.Write(buf[:n])
-				}
-			}(c)
+			// echo
+			conn.WriteToUDP(buf[:packLen], remoteAddr)
 		}
 	}
 }
 
 func client() {
-	conn, err := net.Dial("tcp", proxyAddr)
+	addr, err := net.ResolveUDPAddr("udp", proxyAddr)
+	if err != nil {
+		panic(err)
+	}
+	conn, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
 		panic(err)
 	}
