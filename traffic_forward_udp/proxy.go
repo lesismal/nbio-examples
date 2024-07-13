@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	network    = "udp"
 	proxyAddr  = "127.0.0.1:8080"
 	serverAddr = "127.0.0.1:18080"
 )
@@ -29,7 +30,7 @@ func main() {
 	time.AfterFunc(time.Second, client)
 
 	engine := nbio.NewEngine(nbio.Config{
-		Network:            "udp",
+		Network:            network,
 		Addrs:              []string{proxyAddr},
 		MaxWriteBufferSize: 6 * 1024 * 1024,
 	})
@@ -37,8 +38,8 @@ func main() {
 	engine.OnOpen(func(srcConn *nbio.Conn) {
 		sess := &Session{}
 		srcConn.SetSession(sess)
-		// engine.DialAsync("udp", dstAddr,  func(dstConn *nbio.Conn, err error) {
-		engine.DialAsyncTimeout("udp", serverAddr, time.Second*3, func(dstConn *nbio.Conn, err error) {
+		// engine.DialAsync(network, dstAddr,  func(dstConn *nbio.Conn, err error) {
+		engine.DialAsyncTimeout(network, serverAddr, time.Second*3, func(dstConn *nbio.Conn, err error) {
 			if err != nil {
 				srcConn.Close()
 				return
@@ -57,7 +58,7 @@ func main() {
 	})
 
 	engine.OnData(func(c *nbio.Conn, data []byte) {
-		log.Printf("[%v -> %v] onData: %v", c.RemoteAddr().String(), c.LocalAddr().String(), len(data))
+		log.Printf("[%v, %v -> %v] onData: %v", c.RemoteAddr().Network(), c.RemoteAddr().String(), c.LocalAddr().String(), len(data))
 		sess, _ := c.Session().(*Session)
 		if sess == nil {
 			sess = &Session{Cache: append([]byte{}, data...)}
@@ -83,11 +84,11 @@ func main() {
 }
 
 func server() {
-	addr, err := net.ResolveUDPAddr("udp", serverAddr)
+	addr, err := net.ResolveUDPAddr(network, serverAddr)
 	if err != nil {
 		panic(1)
 	}
-	conn, err := net.ListenUDP("udp", addr)
+	conn, err := net.ListenUDP(network, addr)
 	if err != nil {
 		panic(err)
 	}
@@ -104,11 +105,11 @@ func server() {
 }
 
 func client() {
-	addr, err := net.ResolveUDPAddr("udp", proxyAddr)
+	addr, err := net.ResolveUDPAddr(network, proxyAddr)
 	if err != nil {
 		panic(err)
 	}
-	conn, err := net.DialUDP("udp", nil, addr)
+	conn, err := net.DialUDP(network, nil, addr)
 	if err != nil {
 		panic(err)
 	}
