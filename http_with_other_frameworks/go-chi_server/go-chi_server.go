@@ -20,6 +20,9 @@ func init() {
 		// echo
 		c.WriteMessage(messageType, data)
 	})
+	upgrader.OnClose(func(c *websocket.Conn, err error) {
+		log.Println("OnClose:", c.RemoteAddr().String(), err)
+	})
 }
 
 func onHello(hrw http.ResponseWriter, req *http.Request) {
@@ -28,21 +31,11 @@ func onHello(hrw http.ResponseWriter, req *http.Request) {
 }
 
 func onWebsocket(hrw http.ResponseWriter, req *http.Request) {
-	upgrader.OnMessage(func(conn *websocket.Conn, messageType websocket.MessageType, data []byte) {
-		// echo
-		conn.WriteMessage(messageType, data)
-	})
-	upgrader.OnOpen(func(conn *websocket.Conn) {
-		log.Println("OnOpen:", conn.RemoteAddr().String())
-	})
-
 	conn, err := upgrader.Upgrade(hrw, req, nil)
 	if err != nil {
 		panic(err)
 	}
-	conn.OnClose(func(c *websocket.Conn, err error) {
-		log.Println("OnClose:", c.RemoteAddr().String(), err)
-	})
+	log.Println("OnOpen:", conn.RemoteAddr().String())
 }
 
 func main() {

@@ -19,7 +19,11 @@ var upgrader = websocket.NewUpgrader()
 
 func init() {
 	upgrader.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
+		// echo
 		c.WriteMessage(messageType, data)
+	})
+	upgrader.OnClose(func(c *websocket.Conn, err error) {
+		log.Println("OnClose:", c.RemoteAddr().String(), err)
 	})
 }
 
@@ -33,9 +37,6 @@ func HTTPOnWebsocket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	conn.OnClose(func(c *websocket.Conn, err error) {
-		log.Println("OnClose:", c.RemoteAddr().String(), err)
-	})
 	log.Println("OnOpen:", conn.RemoteAddr().String())
 }
 

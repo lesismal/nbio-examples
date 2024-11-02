@@ -20,6 +20,9 @@ func init() {
 		// echo
 		c.WriteMessage(messageType, data)
 	})
+	upgrader.OnClose(func(c *websocket.Conn, err error) {
+		log.Println("OnClose:", c.RemoteAddr().String(), err)
+	})
 }
 
 func onHello(c *gin.Context) {
@@ -29,18 +32,10 @@ func onHello(c *gin.Context) {
 func onWebsocket(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
-	upgrader.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
-		// echo
-		c.WriteMessage(messageType, data)
-	})
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
-	conn.OnClose(func(c *websocket.Conn, err error) {
-		log.Println("OnClose:", c.RemoteAddr().String(), err)
-	})
 	log.Println("OnOpen:", conn.RemoteAddr().String())
 }
 
