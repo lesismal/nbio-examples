@@ -13,6 +13,15 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 )
 
+var upgrader = websocket.NewUpgrader()
+
+func init() {
+	upgrader.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
+		// echo
+		c.WriteMessage(messageType, data)
+	})
+}
+
 func onHello(c echo.Context) error {
 	return c.String(http.StatusOK, "hello world")
 }
@@ -20,11 +29,6 @@ func onHello(c echo.Context) error {
 func onWebsocket(c echo.Context) error {
 	w := c.Response()
 	r := c.Request()
-	upgrader := websocket.NewUpgrader()
-	upgrader.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
-		// echo
-		c.WriteMessage(messageType, data)
-	})
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
