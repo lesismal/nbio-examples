@@ -71,6 +71,8 @@ func websocketTest(addr string) {
 	defer c.Close()
 
 	data := []byte("hello world")
-	websocketEcho(c, websocket.TextMessage, data)
-	websocketEcho(c, websocket.BinaryMessage, data)
+	for i := 0; i < 5; i++ {
+		websocketEcho(c, websocket.TextMessage, data)
+		websocketEcho(c, websocket.BinaryMessage, data)
+	}
 }

@@ -43,13 +43,13 @@ func main() {
 	e.GET("/hello", onHello)
 	e.GET("/ws", onWebsocket)
 
-	svr := nbhttp.NewEngine(nbhttp.Config{
+	engine := nbhttp.NewEngine(nbhttp.Config{
 		Network: "tcp",
 		Addrs:   []string{"localhost:8080"},
 		Handler: e,
 	})
 
-	err := svr.Start()
+	err := engine.Start()
 	if err != nil {
 		log.Fatalf("nbio.Start failed: %v\n", err)
 	}
@@ -62,5 +62,5 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	svr.Shutdown(ctx)
+	engine.Shutdown(ctx)
 }

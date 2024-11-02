@@ -6,26 +6,29 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/adaptor"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 )
 
-func onHello(c *gin.Context) {
-	c.String(http.StatusOK, "hello world")
-}
+var upgrader = websocket.NewUpgrader()
 
-func onWebsocket(c *gin.Context) {
-	w := c.Writer
-	r := c.Request
-	upgrader := websocket.NewUpgrader()
+func init() {
 	upgrader.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, data []byte) {
-		// echo
 		c.WriteMessage(messageType, data)
 	})
+}
 
+func FiberOnHello(c fiber.Ctx) error {
+	c.SendString("hello world")
+	return nil
+}
+
+func HTTPOnWebsocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
@@ -37,15 +40,23 @@ func onWebsocket(c *gin.Context) {
 }
 
 func main() {
-	router := gin.New()
-
-	router.GET("/hello", onHello)
-	router.GET("/ws", onWebsocket)
+	router := fiber.New()
+	router.Get("/hello", FiberOnHello)
+	fiberHandler := adaptor.FiberApp(router)
 
 	engine := nbhttp.NewEngine(nbhttp.Config{
 		Network: "tcp",
 		Addrs:   []string{"localhost:8080"},
-		Handler: router,
+
+		// For HTTP, use fiber.
+		// For Webosocket, use http.Handler;
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasPrefix(r.URL.Path, "/ws") {
+				HTTPOnWebsocket(w, r)
+			} else {
+				fiberHandler(w, r)
+			}
+		}),
 	})
 
 	err := engine.Start()
